@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { Propiedad } from '../types';
+import { calificacionesService } from '../services/api';
 
 interface PropertyCardProps {
   propiedad: Propiedad;
@@ -9,60 +10,151 @@ interface PropertyCardProps {
 }
 
 export default function PropertyCard({ propiedad, onPress }: PropertyCardProps) {
-  const fotoPrincipal = propiedad.fotos?.find(f => f.es_principal)?.url_foto || 
-                       propiedad.fotos?.[0]?.url_foto ||
-                       'https://via.placeholder.com/400x300';
+  const [esFavorito, setEsFavorito] = useState(false);
+  const [estadisticas, setEstadisticas] = useState<any>(null);
+  const [loadingEstadisticas, setLoadingEstadisticas] = useState(false);
 
-  const caracteristicas = propiedad.caracteristicas;
+  const fotoPrincipal = propiedad.fotos?.find(f => f.es_principal)?.url_foto || 
+                       'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267';
+
+  useEffect(() => {
+    cargarEstadisticas();
+  }, [propiedad.id_propiedad]);
+
+  const cargarEstadisticas = async () => {
+    try {
+      setLoadingEstadisticas(true);
+      const stats = await calificacionesService.obtenerEstadisticasPropiedad(propiedad.id_propiedad);
+      setEstadisticas(stats);
+    } catch (error) {
+      console.error('Error cargando estadísticas:', error);
+    } finally {
+      setLoadingEstadisticas(false);
+    }
+  };
+
+  const toggleFavorito = () => {
+    setEsFavorito(!esFavorito);
+    // Aquí implementarías la llamada a la API
+  };
+
+  const renderEstrellas = (calificacion: number) => {
+    return (
+      <View style={styles.estrellasContainer}>
+        {[1, 2, 3, 4, 5].map((estrella) => (
+          <Ionicons
+            key={estrella}
+            name={estrella <= calificacion ? "star" : "star-outline"}
+            size={12}
+            color="#FF385C"
+          />
+        ))}
+        <Text style={styles.calificacionText}>({calificacion.toFixed(1)})</Text>
+      </View>
+    );
+  };
 
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress}>
-      <Image source={{ uri: fotoPrincipal }} style={styles.image} />
-      
-      <View style={styles.badge}>
-        <Text style={styles.badgeText}>{formatTipo(propiedad.tipo_propiedad)}</Text>
+    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.9}>
+      <View style={styles.imageContainer}>
+        <Image source={{ uri: fotoPrincipal }} style={styles.image} />
+        
+        {/* Badge de Verificado */}
+        {propiedad.id_arrendador && (
+          <View style={styles.verifiedBadge}>
+            <Ionicons name="shield-checkmark" size={12} color="#fff" />
+            <Text style={styles.verifiedText}>Verificado</Text>
+          </View>
+        )}
+
+        <TouchableOpacity 
+          style={[styles.favoriteButton, esFavorito && styles.favoriteButtonActive]}
+          onPress={toggleFavorito}
+        >
+          <Ionicons 
+            name={esFavorito ? "heart" : "heart-outline"} 
+            size={20} 
+            color={esFavorito ? "#FF385C" : "#fff"} 
+          />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.content}>
+        {/* Header con ubicación y calificación */}
+        <View style={styles.header}>
+          <View style={styles.location}>
+            <Ionicons name="location-outline" size={14} color="#6b7280" />
+            <Text style={styles.locationText} numberOfLines={1}>
+              {propiedad.colonia}, {propiedad.ciudad}
+            </Text>
+          </View>
+          
+          {estadisticas && estadisticas.total_calificaciones > 0 && (
+            <View style={styles.ratingContainer}>
+              {renderEstrellas(estadisticas.promedio_general)}
+            </View>
+          )}
+        </View>
+
+        {/* Título */}
         <Text style={styles.title} numberOfLines={2}>{propiedad.titulo}</Text>
-        
-        <View style={styles.location}>
-          <Ionicons name="location-outline" size={16} color="#666" />
-          <Text style={styles.locationText}>
-            {propiedad.colonia}, {propiedad.ciudad}
-          </Text>
-        </View>
 
+        {/* Características principales */}
         <View style={styles.features}>
-          {caracteristicas?.wifi && (
+          {propiedad.caracteristicas?.numero_camas && (
             <View style={styles.feature}>
-              <Ionicons name="wifi" size={16} color="#2563eb" />
-              <Text style={styles.featureText}>WiFi</Text>
+              <Ionicons name="bed-outline" size={14} color="#6b7280" />
+              <Text style={styles.featureText}>{propiedad.caracteristicas.numero_camas}</Text>
             </View>
           )}
-          {caracteristicas?.amueblado && (
+          {propiedad.caracteristicas?.numero_banios && (
             <View style={styles.feature}>
-              <Ionicons name="bed-outline" size={16} color="#2563eb" />
-              <Text style={styles.featureText}>Amueblado</Text>
+              <Ionicons name="water-outline" size={14} color="#6b7280" />
+              <Text style={styles.featureText}>{propiedad.caracteristicas.numero_banios}</Text>
             </View>
           )}
-          {caracteristicas?.numero_camas && (
+          {propiedad.caracteristicas?.metros_cuadrados && (
             <View style={styles.feature}>
-              <Text style={styles.featureText}>{caracteristicas.numero_camas} cama(s)</Text>
+              <Ionicons name="square-outline" size={14} color="#6b7280" />
+              <Text style={styles.featureText}>{propiedad.caracteristicas.metros_cuadrados}m²</Text>
             </View>
           )}
         </View>
 
+        {/* Características con iconos */}
+        <View style={styles.amenities}>
+          {propiedad.caracteristicas?.wifi && (
+            <Ionicons name="wifi" size={16} color="#6b7280" />
+          )}
+          {propiedad.caracteristicas?.estacionamiento && (
+            <Ionicons name="car-sport-outline" size={16} color="#6b7280" />
+          )}
+          {propiedad.caracteristicas?.mascotas_permitidas && (
+            <Ionicons name="paw-outline" size={16} color="#6b7280" />
+          )}
+          {propiedad.caracteristicas?.amueblado && (
+            <Ionicons name="home-outline" size={16} color="#6b7280" />
+          )}
+        </View>
+
+        {/* Footer con precio */}
         <View style={styles.footer}>
-          <Text style={styles.price}>${propiedad.precio_mensual}/mes</Text>
-          {propiedad.disponible ? (
-            <View style={styles.available}>
-              <Text style={styles.availableText}>Disponible</Text>
-            </View>
-          ) : (
-            <View style={styles.unavailable}>
-              <Text style={styles.unavailableText}>No disponible</Text>
-            </View>
+          <View>
+            <Text style={styles.price}>
+              <Text style={styles.priceAmount}>${propiedad.precio_mensual.toLocaleString()}</Text>
+              <Text style={styles.pricePeriod}> / mes</Text>
+            </Text>
+            {propiedad.deposito_requerido && (
+              <Text style={styles.deposit}>
+                + ${propiedad.deposito_requerido.toLocaleString()} de depósito
+              </Text>
+            )}
+          </View>
+          
+          {estadisticas && estadisticas.total_calificaciones > 0 && (
+            <Text style={styles.reviews}>
+              {estadisticas.total_calificaciones} {estadisticas.total_calificaciones === 1 ? 'reseña' : 'reseñas'}
+            </Text>
           )}
         </View>
       </View>
@@ -70,68 +162,104 @@ export default function PropertyCard({ propiedad, onPress }: PropertyCardProps) 
   );
 }
 
-function formatTipo(tipo: string): string {
-  const tipos: Record<string, string> = {
-    cuarto_individual: 'Cuarto Individual',
-    cuarto_compartido: 'Cuarto Compartido',
-    departamento: 'Departamento',
-    casa: 'Casa',
-  };
-  return tipos[tipo] || tipo;
-}
-
 const styles = StyleSheet.create({
   card: {
     backgroundColor: '#fff',
-    borderRadius: 12,
+    borderRadius: 16,
     overflow: 'hidden',
+    marginBottom: 24,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  imageContainer: {
+    position: 'relative',
   },
   image: {
     width: '100%',
-    height: 200,
+    height: 240,
     backgroundColor: '#f3f4f6',
   },
-  badge: {
+  verifiedBadge: {
     position: 'absolute',
     top: 12,
     left: 12,
-    backgroundColor: '#2563eb',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
-  badgeText: {
+  verifiedText: {
     color: '#fff',
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '600',
+  },
+  favoriteButton: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  favoriteButtonActive: {
+    backgroundColor: 'rgba(255,255,255,0.9)',
   },
   content: {
     padding: 16,
   },
-  title: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#111',
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
     marginBottom: 8,
   },
   location: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    marginBottom: 12,
   },
   locationText: {
     fontSize: 14,
-    color: '#666',
+    fontWeight: '500',
+    color: '#111',
+    flex: 1,
+  },
+  ratingContainer: {
+    alignItems: 'flex-end',
+  },
+  estrellasContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  calificacionText: {
+    fontSize: 12,
+    color: '#6b7280',
+    marginLeft: 4,
+  },
+  title: {
+    fontSize: 16,
+    color: '#374151',
+    marginBottom: 12,
+    lineHeight: 22,
+    fontWeight: '500',
   },
   features: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 16,
     marginBottom: 12,
   },
   feature: {
@@ -140,40 +268,40 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   featureText: {
-    fontSize: 12,
-    color: '#666',
+    fontSize: 14,
+    color: '#6b7280',
+  },
+  amenities: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 16,
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 8,
+    alignItems: 'flex-end',
   },
   price: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+  },
+  priceAmount: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#2563eb',
-  },
-  available: {
-    backgroundColor: '#dcfce7',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 4,
-  },
-  availableText: {
-    color: '#16a34a',
-    fontSize: 12,
     fontWeight: '600',
+    color: '#111',
   },
-  unavailable: {
-    backgroundColor: '#fee2e2',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 4,
+  pricePeriod: {
+    fontSize: 14,
+    color: '#6b7280',
   },
-  unavailableText: {
-    color: '#dc2626',
+  deposit: {
     fontSize: 12,
-    fontWeight: '600',
+    color: '#6b7280',
+    marginTop: 2,
+  },
+  reviews: {
+    fontSize: 12,
+    color: '#6b7280',
+    textAlign: 'right',
   },
 });

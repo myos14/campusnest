@@ -1,9 +1,14 @@
+// ==========================================
+// app/(tabs)/index.tsx - HOME MEJORADO CON HEADER
+// ==========================================
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, RefreshControl, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { propiedadesService } from '../../services/api';
 import type { Propiedad } from '../../types';
 import PropertyCard from '../../components/PropertyCard';
+import Header from '../../components/Header'; // ✅ Importar el Header nuevo
 
 export default function HomeScreen() {
   const [propiedades, setPropiedades] = useState<Propiedad[]>([]);
@@ -44,25 +49,55 @@ export default function HomeScreen() {
   if (loading) {
     return (
       <View style={styles.loading}>
-        <ActivityIndicator size="large" color="#2563eb" />
+        <ActivityIndicator size="large" color="#FF385C" />
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>CampusNest</Text>
-        <Text style={styles.subtitle}>Encuentra tu hogar ideal</Text>
-      </View>
+      {/* ✅ Reemplazar header viejo por el nuevo Header */}
+      <Header />
 
-      <View style={styles.searchContainer}>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Buscar por ubicación o título..."
-          value={busqueda}
-          onChangeText={setBusqueda}
-        />
+      <View style={styles.searchSection}>
+        <View style={styles.searchBar}>
+          <Ionicons name="search" size={20} color="#6b7280" style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="¿A dónde quieres ir?"
+            value={busqueda}
+            onChangeText={setBusqueda}
+            placeholderTextColor="#9ca3af"
+          />
+          {busqueda.length > 0 && (
+            <TouchableOpacity onPress={() => setBusqueda('')}>
+              <Ionicons name="close-circle" size={20} color="#6b7280" />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filters}>
+          <TouchableOpacity style={styles.filterButton}>
+            <Ionicons name="bed-outline" size={20} color="#111" />
+            <Text style={styles.filterText}>Habitaciones</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.filterButton}>
+            <Ionicons name="home-outline" size={20} color="#111" />
+            <Text style={styles.filterText}>Departamentos</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.filterButton}>
+            <Ionicons name="wifi" size={20} color="#111" />
+            <Text style={styles.filterText}>WiFi</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.filterButton}>
+            <Ionicons name="car-sport-outline" size={20} color="#111" />
+            <Text style={styles.filterText}>Estacionamiento</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.filterButton}>
+            <Ionicons name="paw-outline" size={20} color="#111" />
+            <Text style={styles.filterText}>Mascotas</Text>
+          </TouchableOpacity>
+        </ScrollView>
       </View>
 
       <FlatList
@@ -76,11 +111,13 @@ export default function HomeScreen() {
         )}
         contentContainerStyle={styles.list}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#FF385C']} />
         }
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Text style={styles.emptyText}>No se encontraron propiedades</Text>
+            <Ionicons name="home-outline" size={64} color="#d1d5db" />
+            <Text style={styles.emptyTitle}>No hay propiedades disponibles</Text>
+            <Text style={styles.emptyText}>Intenta ajustar tu búsqueda</Text>
           </View>
         }
       />
@@ -91,50 +128,73 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
+    backgroundColor: '#fff',
   },
   loading: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  header: {
-    padding: 20,
-    paddingTop: 60,
     backgroundColor: '#fff',
+  },
+  searchSection: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: '#f3f4f6',
   },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#2563eb',
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f3f4f6',
+    borderRadius: 32,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginBottom: 16,
   },
-  subtitle: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 4,
-  },
-  searchContainer: {
-    padding: 16,
-    backgroundColor: '#fff',
+  searchIcon: {
+    marginRight: 8,
   },
   searchInput: {
-    backgroundColor: '#f3f4f6',
-    padding: 12,
-    borderRadius: 8,
+    flex: 1,
     fontSize: 16,
+    color: '#111',
+  },
+  filters: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  filterButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    marginRight: 8,
+  },
+  filterText: {
+    fontSize: 14,
+    color: '#111',
+    fontWeight: '500',
   },
   list: {
-    padding: 16,
-    gap: 16,
+    padding: 20,
   },
   empty: {
-    padding: 40,
+    padding: 60,
     alignItems: 'center',
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#111',
+    marginTop: 16,
   },
   emptyText: {
     fontSize: 16,
-    color: '#666',
+    color: '#6b7280',
+    marginTop: 8,
   },
 });
