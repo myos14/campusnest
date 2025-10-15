@@ -1,5 +1,5 @@
 """
-Modelos de SQLAlchemy para Propiedades - COMPATIBLE con BD PostgreSQL
+Modelos de SQLAlchemy para Propiedades
 """
 
 from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, Text, Integer, DECIMAL, Date
@@ -11,7 +11,7 @@ from app.database import Base
 
 
 class Propiedad(Base):
-    """Modelo de Propiedad - COMPATIBLE con BD PostgreSQL existente"""
+    """Modelo de Propiedad"""
     __tablename__ = "propiedades"
 
     id_propiedad = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)

@@ -13,6 +13,7 @@ export default function PropertyCard({ propiedad, onPress }: PropertyCardProps) 
   const [esFavorito, setEsFavorito] = useState(false);
   const [estadisticas, setEstadisticas] = useState<any>(null);
   const [loadingEstadisticas, setLoadingEstadisticas] = useState(false);
+  const [isPressed, setIsPressed] = useState(false);
 
   const fotoPrincipal = propiedad.fotos?.find(f => f.es_principal)?.url_foto || 
                        'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267';
@@ -35,7 +36,7 @@ export default function PropertyCard({ propiedad, onPress }: PropertyCardProps) 
 
   const toggleFavorito = () => {
     setEsFavorito(!esFavorito);
-    // Aquí implementarías la llamada a la API
+    // Implementacion de la llamada API
   };
 
   const renderEstrellas = (calificacion: number) => {
@@ -55,7 +56,16 @@ export default function PropertyCard({ propiedad, onPress }: PropertyCardProps) 
   };
 
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.9}>
+    <TouchableOpacity 
+      style={[
+        styles.card,
+        isPressed && styles.cardPressed
+      ]}
+      onPress={onPress}
+      onPressIn={() => setIsPressed(true)}
+      onPressOut={() => setIsPressed(false)}
+      activeOpacity={1}
+    >
       <View style={styles.imageContainer}>
         <Image source={{ uri: fotoPrincipal }} style={styles.image} />
         
@@ -70,6 +80,7 @@ export default function PropertyCard({ propiedad, onPress }: PropertyCardProps) 
         <TouchableOpacity 
           style={[styles.favoriteButton, esFavorito && styles.favoriteButtonActive]}
           onPress={toggleFavorito}
+          activeOpacity={1}
         >
           <Ionicons 
             name={esFavorito ? "heart" : "heart-outline"} 
@@ -168,7 +179,8 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: 'hidden',
     marginBottom: 24,
-    shadowColor: '#000',
+    // Sombra estática con tu color rojo
+    shadowColor: '#FF385C',
     shadowOffset: {
       width: 0,
       height: 2,
@@ -176,6 +188,18 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 4,
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  cardPressed: {
+    // Cuando está presionado - tono más claro del rojo
+    shadowColor: '#ff6b8b',
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 6,
+    borderColor: '#FF385C',
+    borderWidth: 1,
+    transform: [{ scale: 0.98 }],
   },
   imageContainer: {
     position: 'relative',

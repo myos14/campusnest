@@ -1,14 +1,14 @@
 // ==========================================
-// app/(tabs)/index.tsx - HOME MEJORADO CON HEADER
+// Menú principal
 // ==========================================
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, RefreshControl, ScrollView } from 'react-native';
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { propiedadesService } from '../../services/api';
 import type { Propiedad } from '../../types';
 import PropertyCard from '../../components/PropertyCard';
-import Header from '../../components/Header'; // ✅ Importar el Header nuevo
+import Header from '../../components/Header';
 
 export default function HomeScreen() {
   const [propiedades, setPropiedades] = useState<Propiedad[]>([]);
@@ -56,50 +56,13 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      {/* ✅ Reemplazar header viejo por el nuevo Header */}
-      <Header />
+      <Header 
+        searchValue={busqueda}
+        onSearchChange={setBusqueda}
+        showFilters={true}
+      />
 
-      <View style={styles.searchSection}>
-        <View style={styles.searchBar}>
-          <Ionicons name="search" size={20} color="#6b7280" style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="¿A dónde quieres ir?"
-            value={busqueda}
-            onChangeText={setBusqueda}
-            placeholderTextColor="#9ca3af"
-          />
-          {busqueda.length > 0 && (
-            <TouchableOpacity onPress={() => setBusqueda('')}>
-              <Ionicons name="close-circle" size={20} color="#6b7280" />
-            </TouchableOpacity>
-          )}
-        </View>
-
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filters}>
-          <TouchableOpacity style={styles.filterButton}>
-            <Ionicons name="bed-outline" size={20} color="#111" />
-            <Text style={styles.filterText}>Habitaciones</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.filterButton}>
-            <Ionicons name="home-outline" size={20} color="#111" />
-            <Text style={styles.filterText}>Departamentos</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.filterButton}>
-            <Ionicons name="wifi" size={20} color="#111" />
-            <Text style={styles.filterText}>WiFi</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.filterButton}>
-            <Ionicons name="car-sport-outline" size={20} color="#111" />
-            <Text style={styles.filterText}>Estacionamiento</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.filterButton}>
-            <Ionicons name="paw-outline" size={20} color="#111" />
-            <Text style={styles.filterText}>Mascotas</Text>
-          </TouchableOpacity>
-        </ScrollView>
-      </View>
-
+      {/* Lista de propiedades */}
       <FlatList
         data={propiedadesFiltradas}
         keyExtractor={(item) => item.id_propiedad}
@@ -135,49 +98,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#fff',
-  },
-  searchSection: {
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
-  },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f3f4f6',
-    borderRadius: 32,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    marginBottom: 16,
-  },
-  searchIcon: {
-    marginRight: 8,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 16,
-    color: '#111',
-  },
-  filters: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  filterButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: '#d1d5db',
-    marginRight: 8,
-  },
-  filterText: {
-    fontSize: 14,
-    color: '#111',
-    fontWeight: '500',
   },
   list: {
     padding: 20,

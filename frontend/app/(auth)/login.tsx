@@ -35,7 +35,7 @@ export default function LoginScreen() {
     >
       <View style={styles.content}>
         <View style={styles.header}>
-          <Text style={styles.title}>CampusNest</Text>
+          <Text style={styles.title}>Roomie</Text>
           <Text style={styles.subtitle}>Encuentra tu hogar cerca de tu universidad</Text>
         </View>
 

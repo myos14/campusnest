@@ -50,7 +50,7 @@ export default function RegisterScreen() {
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.content}>
         <View style={styles.header}>
-          <Text style={styles.title}>CampusNest</Text>
+          <Text style={styles.title}>Roomie</Text>
           <Text style={styles.subtitle}>Encuentra tu hogar cerca de tu universidad</Text>
         </View>
 

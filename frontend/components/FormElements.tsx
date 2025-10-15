@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { TextInput, TextInputProps, View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 
-// Input personalizado con estilos de focus mejorado
 interface CustomInputProps extends TextInputProps {
   label?: string;
 }

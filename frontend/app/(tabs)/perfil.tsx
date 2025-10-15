@@ -18,7 +18,7 @@ export default function PerfilScreen() {
 
   const cargarEstadisticas = async () => {
     try {
-      // Aquí implementarías la carga de estadísticas del usuario
+      // Stats del usuario
     } catch (error) {
       console.error('Error cargando estadísticas:', error);
     }

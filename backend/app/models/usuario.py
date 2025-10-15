@@ -1,5 +1,5 @@
 """
-Modelos de SQLAlchemy para Usuarios - COMPATIBLE con BD PostgreSQL EXISTENTE
+Modelos de SQLAlchemy para Usuarios
 """
 
 from sqlalchemy import Column, String, Boolean, DateTime, Enum as SQLEnum, ForeignKey, Integer, Text
@@ -10,7 +10,7 @@ import uuid
 from app.database import Base
 
 class Usuario(Base):
-    """Modelo de Usuario - COMPATIBLE con BD existente"""
+    """Modelo de Usuario"""
     __tablename__ = "usuarios"
 
     id_usuario = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
