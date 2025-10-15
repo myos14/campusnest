@@ -5,7 +5,7 @@ Punto de entrada principal de la aplicación FastAPI
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
-from app.routers import auth, propiedades, rentas, favoritos, calificaciones
+from app.routers import settings
 
 # Crear instancia de FastAPI
 app = FastAPI(
@@ -50,7 +50,7 @@ def health_check():
     }
 
 
-from app.routers import auth, propiedades
+from app.routers import auth, propiedades, rentas, favoritos, calificaciones
 
 # Incluir routers
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["Autenticación"])
