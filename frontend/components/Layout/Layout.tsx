@@ -32,7 +32,7 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    marginTop: 0,
+    marginTop: 0, // O 65 si quieres espacio
   },
 });
 

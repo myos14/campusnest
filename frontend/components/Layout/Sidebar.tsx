@@ -97,7 +97,7 @@ const styles = StyleSheet.create({
   sidebarTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#FF385C',
+    color: '#1E3F66',
   },
   sidebarContent: {
     flex: 1,

@@ -47,7 +47,7 @@ export default function PropertyCard({ propiedad, onPress }: PropertyCardProps) 
             key={estrella}
             name={estrella <= calificacion ? "star" : "star-outline"}
             size={12}
-            color="#FF385C"
+            color="#1E3F66"
           />
         ))}
         <Text style={styles.calificacionText}>({calificacion.toFixed(1)})</Text>
@@ -85,7 +85,7 @@ export default function PropertyCard({ propiedad, onPress }: PropertyCardProps) 
           <Ionicons 
             name={esFavorito ? "heart" : "heart-outline"} 
             size={20} 
-            color={esFavorito ? "#FF385C" : "#fff"} 
+            color={esFavorito ? "#1E3F66" : "#fff"} 
           />
         </TouchableOpacity>
       </View>
@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     marginBottom: 24,
     // Sombra estática con tu color rojo
-    shadowColor: '#FF385C',
+    shadowColor: '#1E3F66',
     shadowOffset: {
       width: 0,
       height: 2,
@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 12,
     elevation: 6,
-    borderColor: '#FF385C',
+    borderColor: '#1E3F66',
     borderWidth: 1,
     transform: [{ scale: 0.98 }],
   },

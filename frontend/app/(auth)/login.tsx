@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Alert, KeyboardAvoidingView, 
 import { useAuth } from '../../context/AuthContext';
 import { useRouter } from 'expo-router';
 import { CustomInput } from '../../components/FormElements';
+import { Colors, Spacing, FontSizes, BorderRadius, Shadows } from '../../constants/theme';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -53,7 +54,6 @@ export default function LoginScreen() {
           </View>
 
           <View style={styles.form}>
-            {/* Uso de CustomInput en lugar de TextInput */}
             <CustomInput
               label="Correo electrónico"
               placeholder=""
@@ -103,13 +103,13 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: Colors.neutral50,
   },
   content: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: Spacing.xl,
   },
   header: {
     alignItems: 'center',
@@ -120,62 +120,48 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 35,
     fontWeight: 'bold',
-    color: '#FF385C',
+    color: Colors.primary,
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: Spacing.sm,
   },
   subtitle: {
     fontSize: 15,
-    color: '#666',
+    color: Colors.neutral400,
     textAlign: 'center',
     lineHeight: 20,
   },
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    backgroundColor: Colors.white,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.xxl,
+    ...Shadows.md,
     width: '100%',
     maxWidth: 400,
   },
   tabContainer: {
     flexDirection: 'row',
-    backgroundColor: '#f1f5f9',
-    borderRadius: 12,
+    backgroundColor: Colors.neutral100,
+    borderRadius: BorderRadius.md,
     padding: 4,
-    marginBottom: 24,
+    marginBottom: Spacing.xxl,
   },
   tab: {
     flex: 1,
-    paddingVertical: 12,
+    paddingVertical: Spacing.md,
     alignItems: 'center',
-    borderRadius: 8,
+    borderRadius: BorderRadius.sm,
   },
   activeTab: {
-    backgroundColor: '#fff',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    backgroundColor: Colors.white,
+    ...Shadows.sm,
   },
   tabText: {
-    fontSize: 14,
+    fontSize: FontSizes.sm,
     fontWeight: '500',
-    color: '#64748b',
+    color: Colors.neutral400,
   },
   activeTabText: {
-    color: '#FF385C',
+    color: Colors.primary,
     fontWeight: '600',
   },
   form: {
@@ -185,43 +171,43 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
-    marginTop: 8,
+    marginBottom: Spacing.sm,
+    marginTop: Spacing.sm,
   },
   rememberCheck: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: Spacing.sm,
   },
   checkbox: {
     width: 18,
     height: 18,
     borderWidth: 2,
-    borderColor: '#cbd5e1',
-    borderRadius: 4,
+    borderColor: Colors.neutral100,
+    borderRadius: BorderRadius.sm,
   },
   rememberText: {
-    fontSize: 14,
-    color: '#64748b',
+    fontSize: FontSizes.sm,
+    color: Colors.neutral400,
   },
   forgotText: {
-    fontSize: 14,
-    color: '#FF385C',
+    fontSize: FontSizes.sm,
+    color: Colors.primary,
     fontWeight: '500',
   },
   button: {
-    backgroundColor: '#FF385C',
-    padding: 16,
-    borderRadius: 12,
+    backgroundColor: Colors.primary,
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.md,
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: Spacing.sm,
   },
   buttonDisabled: {
-    backgroundColor: '#fecaca',
+    backgroundColor: Colors.neutral100,
   },
   buttonText: {
-    color: '#fff',
-    fontSize: 16,
+    color: Colors.white,
+    fontSize: FontSizes.md,
     fontWeight: '600',
   },
 });

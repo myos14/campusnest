@@ -1,5 +1,7 @@
+// components/FormElements.tsx - VERSIÓN ORIGINAL CON LABEL FLOTANTE
 import React, { useState } from 'react';
 import { TextInput, TextInputProps, View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
+import { Colors, Spacing, FontSizes, BorderRadius } from '../constants/theme';
 
 interface CustomInputProps extends TextInputProps {
   label?: string;
@@ -45,7 +47,7 @@ export const CustomInput = React.forwardRef<TextInput, CustomInputProps>(
       }),
       color: animatedValue.interpolate({
         inputRange: [0, 1],
-        outputRange: ['#999', '#FF385C'],
+        outputRange: ['#999', '#1E3F66'],
       }),
     };
 
@@ -77,7 +79,7 @@ export const CustomInput = React.forwardRef<TextInput, CustomInputProps>(
   }
 );
 
-// Dropdown para tipo de usuario
+// Dropdown para tipo de usuario (mantén tu versión original)
 interface TipoUsuarioDropdownProps {
   value: 'estudiante' | 'arrendador' | 'ambos';
   onValueChange: (value: 'estudiante' | 'arrendador' | 'ambos') => void;
@@ -141,7 +143,7 @@ export const TipoUsuarioDropdown: React.FC<TipoUsuarioDropdownProps> = ({
     }),
     color: animatedValue.interpolate({
       inputRange: [0, 1],
-      outputRange: ['#999', '#FF385C'],
+      outputRange: ['#999', '#1E3F66'],
     }),
   };
 
@@ -228,7 +230,7 @@ const styles = StyleSheet.create({
     zIndex: 0,
   },
   inputFocused: {
-    borderColor: '#FF385C',
+    borderColor: '#1E3F66',
   },
   dropdownContainer: {
     marginBottom: 16,
@@ -244,7 +246,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   dropdownHeaderOpen: {
-    borderColor: '#FF385C',
+    borderColor: '#1E3F66',
   },
   dropdownDisabled: {
     opacity: 0.6,
@@ -302,13 +304,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   radioOuterSelected: {
-    borderColor: '#FF385C',
+    borderColor: '#1E3F66',
   },
   radioInner: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#FF385C',
+    backgroundColor: '#1E3F66',
   },
   dropdownItemText: {
     fontSize: 16,
@@ -316,7 +318,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   dropdownItemTextSelected: {
-    color: '#FF385C',
+    color: '#1E3F66',
     fontWeight: '600',
   },
 });

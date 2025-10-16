@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Header from '../../components/Header';
+import { Colors, Spacing, FontSizes } from '../../constants/theme';
 
 export default function MyPropertiesScreen() {
   return (
@@ -9,7 +10,7 @@ export default function MyPropertiesScreen() {
       <Header />
       <ScrollView style={styles.content}>
         <View style={styles.emptyState}>
-          <Ionicons name="business-outline" size={64} color="#d1d5db" />
+          <Ionicons name="business-outline" size={64} color={Colors.neutral100} />
           <Text style={styles.emptyTitle}>Mis Propiedades</Text>
           <Text style={styles.emptyText}>
             Aquí podrás gestionar todas tus propiedades publicadas
@@ -23,7 +24,7 @@ export default function MyPropertiesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: Colors.white,
   },
   content: {
     flex: 1,
@@ -34,15 +35,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   emptyTitle: {
-    fontSize: 24,
+    fontSize: FontSizes.xxl,
     fontWeight: '600',
-    color: '#111',
-    marginTop: 16,
-    marginBottom: 8,
+    color: Colors.neutral900,
+    marginTop: Spacing.lg,
+    marginBottom: Spacing.sm,
   },
   emptyText: {
-    fontSize: 16,
-    color: '#6b7280',
+    fontSize: FontSizes.md,
+    color: Colors.neutral400,
     textAlign: 'center',
     lineHeight: 24,
   },

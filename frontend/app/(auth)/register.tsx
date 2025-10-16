@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Alert, ScrollView } from 'rea
 import { useAuth } from '../../context/AuthContext';
 import { useRouter } from 'expo-router';
 import { CustomInput, TipoUsuarioDropdown } from '../../components/FormElements';
+import { Colors, Spacing, FontSizes, BorderRadius, Shadows } from '../../constants/theme';
 
 export default function RegisterScreen() {
   const [email, setEmail] = useState('');
@@ -31,7 +32,6 @@ export default function RegisterScreen() {
         password,
         nombre_completo: nombreCompleto,
         tipo_usuario: tipoUsuario,
-        // Campos restantes seran opcionales y se llenaran en el perfil
         telefono: undefined,
         perfil_estudiante: tipoUsuario === 'estudiante' || tipoUsuario === 'ambos' ? {} : undefined,
         perfil_arrendador: tipoUsuario === 'arrendador' || tipoUsuario === 'ambos' ? {} : undefined,
@@ -127,11 +127,11 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: Colors.neutral50,
   },
   content: {
     paddingVertical: 40,
-    paddingHorizontal: 20,
+    paddingHorizontal: Spacing.xl,
     alignItems: 'center',
   },
   header: {
@@ -143,87 +143,73 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 30,
     fontWeight: 'bold',
-    color: '#FF385C',
+    color: Colors.primary,
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: Spacing.sm,
   },
   subtitle: {
     fontSize: 15,
-    color: '#666',
+    color: Colors.neutral400,
     textAlign: 'center',
     lineHeight: 20,
   },
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    backgroundColor: Colors.white,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.xxl,
+    ...Shadows.md,
     width: '100%',
     maxWidth: 400,
   },
   tabContainer: {
     flexDirection: 'row',
-    backgroundColor: '#f1f5f9',
-    borderRadius: 12,
+    backgroundColor: Colors.neutral100,
+    borderRadius: BorderRadius.md,
     padding: 4,
-    marginBottom: 24,
+    marginBottom: Spacing.xxl,
   },
   tab: {
     flex: 1,
-    paddingVertical: 12,
+    paddingVertical: Spacing.md,
     alignItems: 'center',
-    borderRadius: 8,
+    borderRadius: BorderRadius.sm,
   },
   activeTab: {
-    backgroundColor: '#fff',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    backgroundColor: Colors.white,
+    ...Shadows.sm,
   },
   tabText: {
-    fontSize: 14,
+    fontSize: FontSizes.sm,
     fontWeight: '500',
-    color: '#64748b',
+    color: Colors.neutral400,
   },
   activeTabText: {
-    color: '#FF385C',
+    color: Colors.primary,
     fontWeight: '600',
   },
   form: {
     // gap is handled by CustomInput marginBottom
   },
   button: {
-    backgroundColor: '#FF385C',
-    padding: 16,
-    borderRadius: 12,
+    backgroundColor: Colors.primary,
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.md,
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: Spacing.sm,
   },
   buttonDisabled: {
-    backgroundColor: '#fecaca',
+    backgroundColor: Colors.neutral100,
   },
   buttonText: {
-    color: '#fff',
-    fontSize: 16,
+    color: Colors.white,
+    fontSize: FontSizes.md,
     fontWeight: '600',
   },
   link: {
-    color: '#FF385C',
+    color: Colors.primary,
     textAlign: 'center',
-    marginTop: 16,
-    fontSize: 14,
+    marginTop: Spacing.lg,
+    fontSize: FontSizes.sm,
     fontWeight: '500',
   },
 });

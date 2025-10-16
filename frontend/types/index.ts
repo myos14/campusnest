@@ -60,6 +60,15 @@ export interface AuthResponse {
   user: Usuario;
 }
 
+export interface AuthService {
+  login(credentials: LoginCredentials): Promise<AuthResponse>;
+  register(userData: RegisterData): Promise<AuthResponse>;
+  logout(): Promise<void>;
+  isAuthenticated(): Promise<boolean>;
+  getToken(): Promise<string | null>;
+  getCurrentUser(): Promise<Usuario>;
+}
+
 // Propiedad
 export interface Propiedad {
   id_propiedad: string;

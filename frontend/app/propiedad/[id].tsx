@@ -56,7 +56,7 @@ export default function PropiedadDetalleScreen() {
   if (loading) {
     return (
       <View style={styles.loading}>
-        <ActivityIndicator size="large" color="#FF385C" />
+        <ActivityIndicator size="large" color="#1E3F66" />
       </View>
     );
   }
@@ -80,7 +80,7 @@ export default function PropiedadDetalleScreen() {
           <Ionicons name="arrow-back" size={24} color="#111" />
         </TouchableOpacity>
         <TouchableOpacity style={styles.favoriteButton} onPress={toggleFavorito}>
-          <Ionicons name={isFavorito ? "heart" : "heart-outline"} size={24} color={isFavorito ? "#FF385C" : "#111"} />
+          <Ionicons name={isFavorito ? "heart" : "heart-outline"} size={24} color={isFavorito ? "#1E3F66" : "#111"} />
         </TouchableOpacity>
       </View>
 
@@ -95,7 +95,7 @@ export default function PropiedadDetalleScreen() {
           </View>
           {estadisticas && estadisticas.total_calificaciones > 0 && (
             <View style={styles.rating}>
-              <Ionicons name="star" size={16} color="#FF385C" />
+              <Ionicons name="star" size={16} color="#1E3F66" />
               <Text style={styles.ratingText}>{estadisticas.promedio_general.toFixed(1)}</Text>
               <Text style={styles.reviewCount}>({estadisticas.total_calificaciones})</Text>
             </View>
@@ -368,7 +368,7 @@ const styles = StyleSheet.create({
   },
   contactButton: {
     flexDirection: 'row',
-    backgroundColor: '#FF385C',
+    backgroundColor: '#1E3F66',
     paddingVertical: 16,
     paddingHorizontal: 24,
     borderRadius: 8,

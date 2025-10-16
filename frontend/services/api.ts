@@ -105,6 +105,15 @@ export const authService = {
     const token = await getToken();
     return !!token;
   },
+
+  async getToken(): Promise<string | null> {
+    return await getToken();
+  },
+
+  async getCurrentUser(): Promise<Usuario> {
+    const { data } = await api.get<Usuario>('/usuarios/me');
+    return data;
+  },
 };
 
 // ============================================

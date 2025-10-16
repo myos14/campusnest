@@ -32,7 +32,7 @@ class Usuario(Base):
 
 
 class PerfilEstudiante(Base):
-    """Modelo de Perfil de Estudiante - COMPATIBLE con BD existente"""
+    """Modelo de Perfil de Estudiante"""
     __tablename__ = "perfil_estudiante"
 
     # CORREGIDO: Integer como en tu BD real
@@ -50,7 +50,7 @@ class PerfilEstudiante(Base):
 
 
 class PerfilArrendador(Base):
-    """Modelo de Perfil de Arrendador - COMPATIBLE con BD existente"""
+    """Modelo de Perfil de Arrendador"""
     __tablename__ = "perfil_arrendador"
 
     # CORREGIDO: Integer como en tu BD real

@@ -1,5 +1,5 @@
 """
-Router para autenticación: registro y login
+Router para autenticación: registro, login y gestión de perfil
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -7,9 +7,10 @@ from sqlalchemy.orm import Session
 from datetime import timedelta
 from app.database import get_db
 from app.models.usuario import Usuario, PerfilEstudiante, PerfilArrendador
-from app.schemas.usuario import UsuarioCreate, UsuarioResponse, UsuarioLogin, Token
+from app.schemas.usuario import UsuarioCreate, UsuarioResponse, UsuarioLogin, Token, UsuarioUpdate, PerfilEstudianteCreate
 from app.utils.security import get_password_hash, verify_password, create_access_token
 from app.config import settings
+from app.services.usuario_service import get_current_user
 
 router = APIRouter()
 
@@ -134,3 +135,72 @@ def login(
         access_token=access_token,
         user=UsuarioResponse.model_validate(user)
     )
+
+
+@router.put("/usuarios/me", response_model=UsuarioResponse)
+async def actualizar_perfil_usuario(
+    usuario_data: UsuarioUpdate,
+    current_user: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Actualizar perfil del usuario actual
+    """
+    try:
+        # Actualizar datos básicos del usuario
+        if usuario_data.nombre_completo:
+            current_user.nombre_completo = usuario_data.nombre_completo
+        
+        if usuario_data.telefono is not None:
+            current_user.telefono = usuario_data.telefono
+        
+        if usuario_data.foto_perfil_url:
+            current_user.foto_perfil_url = usuario_data.foto_perfil_url
+        
+        db.commit()
+        db.refresh(current_user)
+        
+        return current_user
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Error al actualizar usuario: {str(e)}"
+        )
+
+
+@router.put("/usuarios/me/perfil-estudiante", response_model=UsuarioResponse)
+async def actualizar_perfil_estudiante(
+    perfil_data: PerfilEstudianteCreate,
+    current_user: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Actualizar perfil de estudiante del usuario actual
+    """
+    try:
+        # Verificar que el usuario tenga perfil de estudiante
+        if not current_user.perfil_estudiante:
+            # Crear perfil si no existe
+            perfil = PerfilEstudiante(
+                id_usuario=current_user.id_usuario,
+                **perfil_data.model_dump()
+            )
+            db.add(perfil)
+        else:
+            # Actualizar perfil existente
+            for key, value in perfil_data.model_dump(exclude_unset=True).items():
+                setattr(current_user.perfil_estudiante, key, value)
+        
+        db.commit()
+        db.refresh(current_user)
+        
+        return current_user
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Error al actualizar perfil estudiante: {str(e)}"
+        )
