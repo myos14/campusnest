@@ -10,6 +10,7 @@ import type {
   LoginCredentials,
   RegisterData,
   AuthResponse,
+  AuthService,
   Propiedad,
   PropiedadFiltros,
   CalificacionPropiedad,
@@ -73,32 +74,85 @@ async function getToken(): Promise<string | null> {
 }
 
 async function removeToken(): Promise<void> {
-  if (Platform.OS === 'web') {
-    localStorage.removeItem('token');
-  } else {
-    await SecureStore.deleteItemAsync('token');
+  try {
+    if (Platform.OS === 'web') {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user'); // 👈 También borrar user
+    } else {
+      await SecureStore.deleteItemAsync('token');
+      // Intentar borrar user (puede que no exista)
+      try {
+        await SecureStore.deleteItemAsync('user');
+      } catch (e) {
+        // Ignorar si no existe
+      }
+    }
+    console.log('✅ Token y user eliminados del storage');
+  } catch (error) {
+    console.error('❌ Error eliminando token:', error);
+    throw error;
   }
 }
-
 // ============================================
 // AUTH
 // ============================================
 
-export const authService = {
+export const authService: AuthService = {
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
-    const { data } = await api.post<AuthResponse>('/auth/login', credentials);
-    await saveToken(data.access_token);
-    return data;
+    try {
+      const { data } = await api.post<AuthResponse>('/auth/login', credentials);
+      await saveToken(data.access_token);
+      
+      // Guardar usuario
+      if (Platform.OS === 'web') {
+        localStorage.setItem('user', JSON.stringify(data.user));
+      } else {
+        await SecureStore.setItemAsync('user', JSON.stringify(data.user));
+      }
+      
+      console.log('✅ Login exitoso');
+      return data;
+    } catch (error) {
+      console.error('❌ Error en login:', error);
+      throw error;
+    }
   },
 
   async register(userData: RegisterData): Promise<AuthResponse> {
-    const { data } = await api.post<AuthResponse>('/auth/register', userData);
-    await saveToken(data.access_token);
-    return data;
+    try {
+      const { data } = await api.post<AuthResponse>('/auth/register', userData);
+      await saveToken(data.access_token);
+      
+      // Guardar usuario
+      if (Platform.OS === 'web') {
+        localStorage.setItem('user', JSON.stringify(data.user));
+      } else {
+        await SecureStore.setItemAsync('user', JSON.stringify(data.user));
+      }
+      
+      console.log('✅ Registro exitoso');
+      return data;
+    } catch (error) {
+      console.error('❌ Error en registro:', error);
+      throw error;
+    }
   },
 
   async logout(): Promise<void> {
-    await removeToken();
+    console.log('🔴 Limpiando authService (logout)...');
+    try {
+      // Eliminar token y usuario del storage
+      await removeToken();
+      
+      // Limpiar header de axios
+      delete api.defaults.headers.common['Authorization'];
+      
+      console.log('✅ Logout completado en authService');
+    } catch (error) {
+      console.error('❌ Error en logout:', error);
+      delete api.defaults.headers.common['Authorization'];
+      throw error;
+    }
   },
 
   async isAuthenticated(): Promise<boolean> {
@@ -110,9 +164,50 @@ export const authService = {
     return await getToken();
   },
 
+  // 👇 CAMBIO: Ya no llamar al backend, solo leer del storage
   async getCurrentUser(): Promise<Usuario> {
-    const { data } = await api.get<Usuario>('/usuarios/me');
-    return data;
+    try {
+      // Intentar obtener del storage primero
+      const cachedUser = await this.getStoredUser();
+      if (cachedUser) {
+        console.log('✅ Usuario obtenido del storage');
+        return cachedUser;
+      }
+      
+      // Si no está en storage, error (porque no hay endpoint /usuarios/me)
+      throw new Error('No hay usuario en storage y no existe endpoint /usuarios/me');
+    } catch (error) {
+      console.error('❌ Error obteniendo usuario:', error);
+      throw error;
+    }
+  },
+
+  async updateUser(user: Usuario): Promise<void> {
+    try {
+      if (Platform.OS === 'web') {
+        localStorage.setItem('user', JSON.stringify(user));
+      } else {
+        await SecureStore.setItemAsync('user', JSON.stringify(user));
+      }
+      console.log('✅ Usuario actualizado en storage');
+    } catch (error) {
+      console.error('❌ Error actualizando usuario:', error);
+    }
+  },
+
+  async getStoredUser(): Promise<Usuario | null> {
+    try {
+      let userStr: string | null = null;
+      if (Platform.OS === 'web') {
+        userStr = localStorage.getItem('user');
+      } else {
+        userStr = await SecureStore.getItemAsync('user');
+      }
+      return userStr ? JSON.parse(userStr) : null;
+    } catch (error) {
+      console.error('❌ Error obteniendo usuario del storage:', error);
+      return null;
+    }
   },
 };
 

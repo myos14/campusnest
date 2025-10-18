@@ -67,6 +67,8 @@ export interface AuthService {
   isAuthenticated(): Promise<boolean>;
   getToken(): Promise<string | null>;
   getCurrentUser(): Promise<Usuario>;
+  updateUser(user: Usuario): Promise<void>; // 👈 NUEVO
+  getStoredUser(): Promise<Usuario | null>; // 👈 NUEVO
 }
 
 // Propiedad

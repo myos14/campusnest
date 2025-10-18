@@ -5,7 +5,6 @@ import Layout from '../components/Layout/Layout';
 export default function RootLayout() {
   return (
     <AuthProvider>
-      {/* 👈 Layout SIEMPRE visible, Navbar cambia internamente */}
       <Layout>
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="(onboarding)" />

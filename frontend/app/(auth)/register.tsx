@@ -56,13 +56,19 @@ export default function RegisterScreen() {
 
         <View style={styles.card}>
           <View style={styles.tabContainer}>
+            {/* TAB LOGIN - Solo para navegar */}
             <TouchableOpacity 
               style={styles.tab}
               onPress={() => router.replace('/(auth)/login')}
             >
               <Text style={styles.tabText}>Iniciar Sesión</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.tab, styles.activeTab]}>
+            
+            {/* TAB REGISTER - SIEMPRE ACTIVO en esta pantalla */}
+            <TouchableOpacity 
+              style={[styles.tab, styles.activeTab]}
+              disabled={true}
+            >
               <Text style={[styles.tabText, styles.activeTabText]}>Registrarse</Text>
             </TouchableOpacity>
           </View>
@@ -187,9 +193,7 @@ const styles = StyleSheet.create({
     color: Colors.primary,
     fontWeight: '600',
   },
-  form: {
-    // gap is handled by CustomInput marginBottom
-  },
+  form: {},
   button: {
     backgroundColor: Colors.primary,
     padding: Spacing.lg,

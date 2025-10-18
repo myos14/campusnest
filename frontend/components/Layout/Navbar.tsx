@@ -1,7 +1,6 @@
-// components/Layout/Navbar.tsx - VERSIÓN CON MENÚ DE PERFIL
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal, Alert } from 'react-native';
-import { useRouter, usePathname } from 'expo-router';
+import { View, Text, TouchableOpacity, StyleSheet, Modal, Alert, Platform } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, FontSizes } from '../../constants/theme';
@@ -12,37 +11,43 @@ interface NavbarProps {
 
 export default function Navbar({ onMenuPress }: NavbarProps) {
   const [profileMenuVisible, setProfileMenuVisible] = useState(false);
+  const [logoutConfirmVisible, setLogoutConfirmVisible] = useState(false);
   const { user, logout } = useAuth();
   const router = useRouter();
-  const pathname = usePathname();
 
-  const isLoginPage = pathname.includes('/login') || pathname === '/login';
-  const isRegisterPage = pathname.includes('/register') || pathname === '/register';
-
-  const handleLogout = () => {
-    setProfileMenuVisible(false); // Cierra el modal
+  const handleLogout = async () => {
+    setProfileMenuVisible(false);
     
-    Alert.alert(
-      'Cerrar sesión',
-      '¿Estás seguro de que quieres cerrar sesión?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { 
-          text: 'Cerrar sesión', 
-          style: 'destructive',
-          onPress: async () => {
-            console.log('Iniciando logout...');
-            await logout(); // Esto limpia user y token
-            console.log('Redirigiendo a onboarding...');
-            router.replace('/(onboarding)'); // Esto cambia la pantalla
-          }
-        }
-      ]
-    );
+    if (Platform.OS === 'web') {
+      setLogoutConfirmVisible(true);
+    } else {
+      Alert.alert(
+        'Cerrar sesión',
+        '¿Estás seguro de que quieres cerrar sesión?',
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          { text: 'Cerrar sesión', style: 'destructive', onPress: executeLogout }
+        ]
+      );
+    }
+  };
+
+  const executeLogout = async () => {
+    try {
+      await logout();
+      router.replace('/(onboarding)');
+      setLogoutConfirmVisible(false);
+    } catch (error) {
+      setLogoutConfirmVisible(false);
+    }
   };
 
   const handleLogoPress = () => {
-    router.replace('/(onboarding)');
+    if (user) {
+      router.push('/(tabs)');
+    } else {
+      router.replace('/(onboarding)');
+    }
   };
 
   const menuItems = [
@@ -72,20 +77,17 @@ export default function Navbar({ onMenuPress }: NavbarProps) {
 
   return (
     <View style={styles.navbar}>
-      {/* Botón Menú - Parte izquierda */}
       <TouchableOpacity style={styles.menuButton} onPress={onMenuPress}>
         <Ionicons name="menu" size={24} color={Colors.white} />
         <Text style={styles.menuText}>Menú</Text>
       </TouchableOpacity>
 
-      {/* Logo - CENTRADO */}
       <View style={styles.logoContainer}>
         <TouchableOpacity onPress={handleLogoPress}>
           <Text style={styles.logo}>Roomie</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Perfil o Login - Parte derecha */}
       {user ? (
         <View style={styles.profileContainer}>
           <TouchableOpacity 
@@ -95,7 +97,6 @@ export default function Navbar({ onMenuPress }: NavbarProps) {
             <Ionicons name="person-circle" size={32} color={Colors.white} />
           </TouchableOpacity>
 
-          {/* Menú desplegable del perfil */}
           <Modal
             visible={profileMenuVisible}
             transparent
@@ -108,7 +109,6 @@ export default function Navbar({ onMenuPress }: NavbarProps) {
               onPress={() => setProfileMenuVisible(false)}
             >
               <View style={styles.menuContent}>
-                {/* Header con info del usuario */}
                 <View style={styles.menuHeader}>
                   <Ionicons name="person-circle" size={40} color={Colors.primary} />
                   <View style={styles.userInfo}>
@@ -121,7 +121,6 @@ export default function Navbar({ onMenuPress }: NavbarProps) {
                   </View>
                 </View>
 
-                {/* Items del menú */}
                 {menuItems.map((item, index) => (
                   <TouchableOpacity
                     key={item.label}
@@ -147,40 +146,53 @@ export default function Navbar({ onMenuPress }: NavbarProps) {
               </View>
             </TouchableOpacity>
           </Modal>
+
+          <Modal
+            visible={logoutConfirmVisible}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setLogoutConfirmVisible(false)}
+          >
+            <View style={styles.confirmOverlay}>
+              <View style={styles.confirmBox}>
+                <Text style={styles.confirmTitle}>Cerrar sesión</Text>
+                <Text style={styles.confirmMessage}>
+                  ¿Estás seguro de que quieres cerrar sesión?
+                </Text>
+                
+                <View style={styles.confirmButtons}>
+                  <TouchableOpacity 
+                    style={[styles.confirmButton, styles.cancelButton]}
+                    onPress={() => setLogoutConfirmVisible(false)}
+                  >
+                    <Text style={styles.cancelButtonText}>Cancelar</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={[styles.confirmButton, styles.logoutButton]}
+                    onPress={executeLogout}
+                  >
+                    <Text style={styles.logoutButtonText}>Cerrar sesión</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </Modal>
         </View>
       ) : (
         <View style={styles.authButtons}>
-          {/* Botón Login */}
           <TouchableOpacity 
-            style={[
-              styles.authButton,
-              isLoginPage && styles.activeAuthButton
-            ]}
+            style={styles.authButton}
             onPress={() => router.push('/(auth)/login')}
           >
-            <Text style={[
-              styles.authButtonText,
-              isLoginPage && styles.activeAuthButtonText
-            ]}>
-              Iniciar sesión
-            </Text>
+            <Text style={styles.authButtonText}>Iniciar sesión</Text>
           </TouchableOpacity>
           
-          {/* Botón Register */}
           <TouchableOpacity 
-            style={[
-              styles.authButton,
-              styles.registerButton,
-              isRegisterPage && styles.activeAuthButton
-            ]}
+            style={[styles.authButton, styles.registerButton]}
             onPress={() => router.push('/(auth)/register')}
           >
-            <Text style={[
-              styles.authButtonText,
-              isRegisterPage && styles.activeAuthButtonText
-            ]}>
-              Registrarse
-            </Text>
+            <Text style={styles.authButtonText}>Registrarse</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -249,23 +261,13 @@ const styles = StyleSheet.create({
     color: Colors.white,
   },
   registerButton: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: 'rgba(255,255,255,0.15)',
   },
-  activeAuthButton: {
-    backgroundColor: 'rgba(255,255,255,0.4)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.8)',
-  },
-  activeAuthButtonText: {
-    fontWeight: 'bold',
-    color: Colors.white,
-  },
-  // Estilos del menú desplegable
   menuOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-start',
-    paddingTop: 80, // Ajusta según la altura de tu navbar
+    paddingTop: 80,
     alignItems: 'flex-end',
     paddingRight: Spacing.lg,
   },
@@ -275,10 +277,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
     minWidth: 220,
     shadowColor: Colors.black,
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 12,
     elevation: 8,
@@ -323,5 +322,62 @@ const styles = StyleSheet.create({
   },
   destructiveText: {
     color: Colors.error,
+  },
+  confirmOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: Spacing.xl,
+  },
+  confirmBox: {
+    backgroundColor: Colors.white,
+    borderRadius: 12,
+    padding: Spacing.xxl,
+    width: '100%',
+    maxWidth: 400,
+    shadowColor: Colors.black,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  confirmTitle: {
+    fontSize: FontSizes.xl,
+    fontWeight: 'bold',
+    color: Colors.neutral900,
+    marginBottom: Spacing.md,
+  },
+  confirmMessage: {
+    fontSize: FontSizes.md,
+    color: Colors.neutral700,
+    marginBottom: Spacing.xxl,
+    lineHeight: 22,
+  },
+  confirmButtons: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+  },
+  confirmButton: {
+    flex: 1,
+    padding: Spacing.lg,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  cancelButton: {
+    backgroundColor: Colors.neutral100,
+  },
+  cancelButtonText: {
+    color: Colors.neutral700,
+    fontSize: FontSizes.md,
+    fontWeight: '600',
+  },
+  logoutButton: {
+    backgroundColor: Colors.error,
+  },
+  logoutButtonText: {
+    color: Colors.white,
+    fontSize: FontSizes.md,
+    fontWeight: '600',
   },
 });

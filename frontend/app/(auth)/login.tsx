@@ -42,12 +42,18 @@ export default function LoginScreen() {
 
         <View style={styles.card}>
           <View style={styles.tabContainer}>
-            <TouchableOpacity style={[styles.tab, styles.activeTab]}>
+            {/* TAB LOGIN - SIEMPRE ACTIVO en esta pantalla */}
+            <TouchableOpacity 
+              style={[styles.tab, styles.activeTab]}
+              disabled={true}
+            >
               <Text style={[styles.tabText, styles.activeTabText]}>Iniciar Sesión</Text>
             </TouchableOpacity>
+            
+            {/* TAB REGISTER - Solo para navegar */}
             <TouchableOpacity 
               style={styles.tab}
-              onPress={() => router.push('/(auth)/register')}
+              onPress={() => router.replace('/(auth)/register')}
             >
               <Text style={styles.tabText}>Registrarse</Text>
             </TouchableOpacity>
@@ -164,9 +170,7 @@ const styles = StyleSheet.create({
     color: Colors.primary,
     fontWeight: '600',
   },
-  form: {
-    // gap is now handled by CustomInput marginBottom
-  },
+  form: {},
   rememberContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',

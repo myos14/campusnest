@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { authService } from '../services/api';
-import type { Usuario, LoginCredentials, RegisterData, AuthResponse } from '../types';
+import type { Usuario, LoginCredentials, RegisterData } from '../types';
 
 interface AuthContextType {
   user: Usuario | null;
@@ -26,15 +26,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   async function checkAuth() {
     try {
       const storedToken = await authService.getToken();
-      if (storedToken) {
+      const storedUser = await authService.getStoredUser();
+      
+      if (storedToken && storedUser) {
         setToken(storedToken);
-        const userData = await authService.getCurrentUser();
-        setUser(userData);
+        setUser(storedUser);
       }
     } catch (error) {
-      console.error('Error checking auth:', error);
-      // Si hay error (token inválido), limpiar
-      await authService.logout();
+      await logout();
     } finally {
       setLoading(false);
     }
@@ -53,9 +52,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function logout() {
-    await authService.logout();
-    setUser(null);
-    setToken(null);
+    try {
+      setUser(null);
+      setToken(null);
+      await authService.logout();
+    } catch (error) {
+      setUser(null);
+      setToken(null);
+    }
   }
 
   return (

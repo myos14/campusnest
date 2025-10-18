@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ImageBackground } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ImageBackground, StatusBar } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
 import { Colors, Spacing, FontSizes, BorderRadius } from '../../constants/theme';
@@ -9,6 +9,7 @@ export default function OnboardingScreen() {
   const { user } = useAuth();
   const router = useRouter();
 
+  // Si el usuario está logueado, redirigir a tabs
   useEffect(() => {
     if (user) {
       router.replace('/(tabs)');
@@ -17,57 +18,71 @@ export default function OnboardingScreen() {
 
   const handleBuscar = () => {
     if (universidad.trim()) {
-      router.push(`/(tabs)?universidad=${encodeURIComponent(universidad)}`);
+      router.push({
+        pathname: '/(tabs)',
+        params: { universidad: universidad }
+      });
     }
   };
 
   return (
-    <ImageBackground 
-      source={require('../../assets/ImageOnboarding.jpg')}
-      style={styles.container}
-      resizeMode="cover"
-    >
-      <View style={styles.overlay}>
-        <Text style={styles.title}>Roomie</Text>
-        <Text style={styles.subtitle}>Encuentra tu hogar cerca de tu universidad</Text>
-        
-        <View style={styles.searchBox}>
-          <Text style={styles.label}>¿Cuál es tu universidad?</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="ej. UNAM, IPN, UANL..."
-            value={universidad}
-            onChangeText={setUniversidad}
-            placeholderTextColor={Colors.neutral400}
-          />
-          <TouchableOpacity 
-            style={[styles.button, !universidad && styles.buttonDisabled]}
-            onPress={handleBuscar}
-            disabled={!universidad}
-          >
-            <Text style={styles.buttonText}>Buscar ubicaciones</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>
-            ¿Ya tienes cuenta? 
-            <Text 
-              style={styles.link} 
-              onPress={() => router.push('/(auth)/login')}
+    <View style={styles.fullScreen}>
+      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
+      
+      <ImageBackground 
+        source={require('../../assets/ImageOnboarding.jpg')}
+        style={styles.container}
+        resizeMode="cover"
+      >
+        <View style={styles.overlay}>
+          <Text style={styles.title}>Roomie</Text>
+          <Text style={styles.subtitle}>Encuentra tu hogar cerca de tu universidad</Text>
+          
+          <View style={styles.searchBox}>
+            <Text style={styles.label}>¿Cuál es tu universidad?</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="ej. BUAP, UPAEP, USEP..."
+              value={universidad}
+              onChangeText={setUniversidad}
+              placeholderTextColor={Colors.neutral400}
+            />
+            <TouchableOpacity 
+              style={[styles.button, !universidad && styles.buttonDisabled]}
+              onPress={handleBuscar}
+              disabled={!universidad}
             >
-              {' '}Iniciar sesión
+              <Text style={styles.buttonText}>Buscar ubicaciones</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>
+              ¿Ya tienes cuenta? 
+              <Text 
+                style={styles.link} 
+                onPress={() => router.push('/(auth)/login')}
+              >
+                {' '}Iniciar sesión
+              </Text>
             </Text>
-          </Text>
+          </View>
         </View>
-      </View>
-    </ImageBackground>
+      </ImageBackground>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  fullScreen: {
+    flex: 1,
+    margin: 0,
+    padding: 0,
+  },
   container: {
     flex: 1,
+    width: '100%',
+    height: '100%',
   },
   overlay: {
     flex: 1,
@@ -75,6 +90,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: Spacing.xl,
+    paddingTop: StatusBar.currentHeight || 40,
   },
   title: {
     fontSize: 48,
