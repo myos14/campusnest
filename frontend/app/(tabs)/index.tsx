@@ -1,5 +1,6 @@
+// app/(tabs)/index.tsx
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, RefreshControl, TouchableOpacity, ScrollView } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { propiedadesService } from '../../services/api';
@@ -13,20 +14,28 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [busqueda, setBusqueda] = useState('');
+  const [distanciaMax, setDistanciaMax] = useState(5);
   const router = useRouter();
   const params = useLocalSearchParams();
   const universidad = params.universidad as string;
 
   useEffect(() => {
     cargarPropiedades();
-  }, []);
+  }, [distanciaMax]);
 
   async function cargarPropiedades() {
     try {
-      const data = await propiedadesService.obtenerPropiedades({
-        disponible: true,
-        limit: 20,
-      });
+      // Si hay universidad, usar el endpoint de propiedades cercanas
+      const data = universidad 
+        ? await propiedadesService.obtenerPropiedadesCercanas({
+            distancia_max: distanciaMax,
+            limit: 20,
+          })
+        : await propiedadesService.obtenerPropiedades({
+            disponible: true,
+            limit: 20,
+          });
+      
       setPropiedades(data);
     } catch (error) {
       console.error('Error al cargar propiedades:', error);
@@ -50,6 +59,7 @@ export default function HomeScreen() {
     return (
       <View style={styles.loading}>
         <ActivityIndicator size="large" color={Colors.primary} />
+        <Text style={styles.loadingText}>Cargando propiedades...</Text>
       </View>
     );
   }
@@ -62,12 +72,72 @@ export default function HomeScreen() {
         showFilters={true}
       />
 
+      {/* Filtros rápidos horizontales */}
+      <ScrollView 
+        horizontal 
+        showsHorizontalScrollIndicator={false}
+        style={styles.filtersContainer}
+        contentContainerStyle={styles.filtersContent}
+      >
+        <TouchableOpacity style={styles.filterChip}>
+          <Text style={styles.filterChipText}>🛏️ Habitaciones</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.filterChip}>
+          <Text style={styles.filterChipText}>🏠 Departamentos</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.filterChip}>
+          <Text style={styles.filterChipText}>📶 WiFi</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.filterChip}>
+          <Text style={styles.filterChipText}>🅿️ Estacionamiento</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.filterChip}>
+          <Text style={styles.filterChipText}>🐾 Mascotas</Text>
+        </TouchableOpacity>
+      </ScrollView>
+
+      {/* Banner de universidad */}
       {universidad && (
-        <View style={styles.universidadContainer}>
-          <Ionicons name="school-outline" size={20} color={Colors.primary} />
-          <Text style={styles.universidadText}>
-            Propiedades cerca de {universidad}
-          </Text>
+        <View style={styles.universidadBanner}>
+          <Text style={styles.universidadIcon}>🎓</Text>
+          <View style={styles.universidadTextContainer}>
+            <Text style={styles.universidadTitle}>
+              Propiedades cerca de {universidad}
+            </Text>
+            <Text style={styles.universidadSubtitle}>
+              Mostrando opciones a menos de {distanciaMax} km
+            </Text>
+          </View>
+        </View>
+      )}
+
+      {/* Filtros de distancia (solo si hay universidad) */}
+      {universidad && (
+        <View style={styles.distanceFilters}>
+          <TouchableOpacity 
+            style={[styles.distanceButton, distanciaMax === 2 && styles.distanceButtonActive]}
+            onPress={() => setDistanciaMax(2)}
+          >
+            <Text style={[styles.distanceButtonText, distanciaMax === 2 && styles.distanceButtonTextActive]}>
+              Muy cerca (&lt;2km)
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.distanceButton, distanciaMax === 5 && styles.distanceButtonActive]}
+            onPress={() => setDistanciaMax(5)}
+          >
+            <Text style={[styles.distanceButtonText, distanciaMax === 5 && styles.distanceButtonTextActive]}>
+              Cerca (&lt;5km)
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.distanceButton, distanciaMax === 10 && styles.distanceButtonActive]}
+            onPress={() => setDistanciaMax(10)}
+          >
+            <Text style={[styles.distanceButtonText, distanciaMax === 10 && styles.distanceButtonTextActive]}>
+              Lejos (&lt;10km)
+            </Text>
+          </TouchableOpacity>
         </View>
       )}
 
@@ -80,16 +150,13 @@ export default function HomeScreen() {
             onPress={() => router.push(`/propiedad/${item.id_propiedad}`)}
           />
         )}
-        contentContainerStyle={[
-          styles.list,
-          !universidad && styles.listWithoutUniversidad
-        ]}
+        contentContainerStyle={styles.list}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[Colors.primary]} />
         }
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Ionicons name="home-outline" size={64} color={Colors.neutral100} />
+            <Text style={styles.emptyIcon}>🏠</Text>
             <Text style={styles.emptyTitle}>No hay propiedades disponibles</Text>
             <Text style={styles.emptyText}>
               {universidad 
@@ -115,37 +182,100 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: Colors.white,
   },
-  universidadContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+  loadingText: {
+    marginTop: Spacing.md,
+    color: Colors.neutral400,
+    fontSize: FontSizes.md,
+  },
+  filtersContainer: {
+    backgroundColor: Colors.white,
     paddingVertical: Spacing.md,
-    backgroundColor: Colors.neutral50,
-    marginHorizontal: Spacing.xl,
-    marginTop: Spacing.sm + 2,
-    borderRadius: BorderRadius.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.neutral100,
+  },
+  filtersContent: {
+    paddingHorizontal: Spacing.xl,
     gap: Spacing.sm,
   },
-  universidadText: {
-    fontSize: FontSizes.md,
-    fontWeight: '600',
-    color: Colors.primary,
+  filterChip: {
+    backgroundColor: Colors.neutral50,
+    borderRadius: BorderRadius.full,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.lg,
+    marginRight: Spacing.sm,
+  },
+  filterChipText: {
+    fontSize: FontSizes.sm,
+    color: Colors.neutral700,
+  },
+  universidadBanner: {
+    backgroundColor: Colors.primary,
+    margin: Spacing.xl,
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  universidadIcon: {
+    fontSize: 32,
+    marginRight: Spacing.md,
+  },
+  universidadTextContainer: {
+    flex: 1,
+  },
+  universidadTitle: {
+    color: Colors.white,
+    fontSize: FontSizes.lg,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  universidadSubtitle: {
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: FontSizes.sm,
+  },
+  distanceFilters: {
+    flexDirection: 'row',
+    paddingHorizontal: Spacing.xl,
+    paddingBottom: Spacing.md,
+    gap: Spacing.sm,
+  },
+  distanceButton: {
+    flex: 1,
+    backgroundColor: Colors.white,
+    borderWidth: 1,
+    borderColor: Colors.neutral200,
+    borderRadius: BorderRadius.full,
+    paddingVertical: Spacing.sm + 2,
+    alignItems: 'center',
+  },
+  distanceButtonActive: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+  distanceButtonText: {
+    color: Colors.neutral700,
+    fontSize: FontSizes.sm,
+    fontWeight: '500',
+  },
+  distanceButtonTextActive: {
+    color: Colors.white,
   },
   list: {
     padding: Spacing.xl,
-  },
-  listWithoutUniversidad: {
-    paddingTop: 0,
   },
   empty: {
     padding: 60,
     alignItems: 'center',
   },
+  emptyIcon: {
+    fontSize: 64,
+    marginBottom: Spacing.lg,
+  },
   emptyTitle: {
     fontSize: FontSizes.xl,
     fontWeight: '600',
     color: Colors.neutral900,
-    marginTop: Spacing.lg,
+    marginTop: Spacing.md,
   },
   emptyText: {
     fontSize: FontSizes.md,

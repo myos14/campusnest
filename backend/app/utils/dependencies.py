@@ -7,7 +7,6 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.utils.security import decode_access_token
 from app.models.usuario import Usuario
-from uuid import UUID
 from typing import Optional
 
 
@@ -51,11 +50,12 @@ def get_current_user(
     
     # Buscar usuario en la BD
     try:
-        user_uuid = UUID(user_id)
-    except ValueError:
+        # Convertir a integer en lugar de UUID
+        user_id_int = int(user_id)
+    except (ValueError, TypeError):
         raise credentials_exception
     
-    user = db.query(Usuario).filter(Usuario.id_usuario == user_uuid).first()
+    user = db.query(Usuario).filter(Usuario.id_usuario == user_id_int).first()
     if user is None:
         raise credentials_exception
     
@@ -78,5 +78,51 @@ def get_current_active_user(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Usuario inactivo"
+        )
+    return current_user
+
+
+def get_current_estudiante(
+    current_user: Usuario = Depends(get_current_user)
+) -> Usuario:
+    """
+    Verifica que el usuario actual sea un estudiante
+    
+    Args:
+        current_user: Usuario obtenido del token
+        
+    Returns:
+        Usuario: Usuario estudiante autenticado
+        
+    Raises:
+        HTTPException: Si el usuario no es estudiante
+    """
+    if current_user.tipo_usuario not in ["estudiante", "ambos"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Se requiere perfil de estudiante"
+        )
+    return current_user
+
+
+def get_current_arrendador(
+    current_user: Usuario = Depends(get_current_user)
+) -> Usuario:
+    """
+    Verifica que el usuario actual sea un arrendador
+    
+    Args:
+        current_user: Usuario obtenido del token
+        
+    Returns:
+        Usuario: Usuario arrendador autenticado
+        
+    Raises:
+        HTTPException: Si el usuario no es arrendador
+    """
+    if current_user.tipo_usuario not in ["arrendador", "ambos"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Se requiere perfil de arrendador"
         )
     return current_user

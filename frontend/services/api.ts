@@ -221,6 +221,16 @@ export const propiedadesService = {
     return data;
   },
 
+  async obtenerPropiedadesCercanas(params: { distancia_max: number; limit?: number }) {
+    const queryParams = new URLSearchParams({
+      distancia_max: params.distancia_max.toString(),
+      limit: (params.limit || 20).toString(),
+    });
+    
+    const response = await api.get(`/propiedades/cercanas?${queryParams}`);
+    return response.data;
+  },
+
   async obtenerPropiedad(id: string): Promise<Propiedad> {
     const { data } = await api.get<Propiedad>(`/propiedades/${id}`);
     return data;
@@ -312,5 +322,33 @@ export const reportesService = {
   },
 };
 
+// ============================================
+// USUARIOS
+// ============================================
+
+export const usuariosService = {
+  async obtenerPerfil(): Promise<Usuario> {
+    const { data } = await api.get<Usuario>('/usuarios/me');
+    return data;
+  },
+
+  async actualizarPerfil(datos: Partial<Usuario>): Promise<Usuario> {
+    const { data } = await api.put<Usuario>('/usuarios/me', datos);
+    
+    // Actualizar el usuario en storage
+    await authService.updateUser(data);
+    
+    return data;
+  },
+
+  async actualizarUniversidad(universidad: string): Promise<Usuario> {
+    const { data } = await api.patch<Usuario>('/usuarios/me/universidad', { universidad });
+    
+    // Actualizar el usuario en storage
+    await authService.updateUser(data);
+    
+    return data;
+  },
+};
 // Exportar cliente para usos personalizados
 export default api;

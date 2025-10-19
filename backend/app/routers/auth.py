@@ -7,10 +7,18 @@ from sqlalchemy.orm import Session
 from datetime import timedelta
 from app.database import get_db
 from app.models.usuario import Usuario, PerfilEstudiante, PerfilArrendador
-from app.schemas.usuario import UsuarioCreate, UsuarioResponse, UsuarioLogin, Token, UsuarioUpdate, PerfilEstudianteCreate
+from app.schemas.usuario import (
+    UsuarioCreate, 
+    UsuarioResponse, 
+    UsuarioLogin, 
+    Token, 
+    UsuarioUpdate, 
+    PerfilEstudianteCreate,
+    PerfilEstudianteUpdate
+)
 from app.utils.security import get_password_hash, verify_password, create_access_token
 from app.config import settings
-from app.services.usuario_service import get_current_user
+from app.utils.dependencies import get_current_user  # CAMBIADO AQUÍ
 
 router = APIRouter()
 
@@ -137,7 +145,17 @@ def login(
     )
 
 
-@router.put("/usuarios/me", response_model=UsuarioResponse)
+@router.get("/me", response_model=UsuarioResponse)
+async def get_perfil_usuario(
+    current_user: Usuario = Depends(get_current_user)
+):
+    """
+    Obtener perfil del usuario actual
+    """
+    return current_user
+
+
+@router.put("/me", response_model=UsuarioResponse)
 async def actualizar_perfil_usuario(
     usuario_data: UsuarioUpdate,
     current_user: Usuario = Depends(get_current_user),
@@ -170,9 +188,9 @@ async def actualizar_perfil_usuario(
         )
 
 
-@router.put("/usuarios/me/perfil-estudiante", response_model=UsuarioResponse)
+@router.put("/me/perfil-estudiante", response_model=UsuarioResponse)
 async def actualizar_perfil_estudiante(
-    perfil_data: PerfilEstudianteCreate,
+    perfil_data: PerfilEstudianteUpdate,
     current_user: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -180,12 +198,19 @@ async def actualizar_perfil_estudiante(
     Actualizar perfil de estudiante del usuario actual
     """
     try:
-        # Verificar que el usuario tenga perfil de estudiante
+        # Verificar que el usuario tenga tipo estudiante o ambos
+        if current_user.tipo_usuario not in ["estudiante", "ambos"]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="El usuario no tiene perfil de estudiante"
+            )
+        
+        # Verificar si ya tiene perfil
         if not current_user.perfil_estudiante:
-            # Crear perfil si no existe
+            # Crear perfil nuevo
             perfil = PerfilEstudiante(
                 id_usuario=current_user.id_usuario,
-                **perfil_data.model_dump()
+                **perfil_data.model_dump(exclude_unset=True)
             )
             db.add(perfil)
         else:
