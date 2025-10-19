@@ -76,3 +76,8 @@ class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user: UsuarioResponse
+
+class TokenData(BaseModel):
+    id_usuario: Optional[int] = None
+    email: Optional[str] = None
+    tipo_usuario: Optional[str] = None
