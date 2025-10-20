@@ -2,6 +2,7 @@
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
 from datetime import datetime
+from uuid import UUID
 
 # ============= PERFIL ESTUDIANTE =============
 class PerfilEstudianteBase(BaseModel):
@@ -20,8 +21,8 @@ class PerfilEstudianteUpdate(BaseModel):
     email_institucional: Optional[EmailStr] = None
 
 class PerfilEstudianteResponse(PerfilEstudianteBase):
-    id_perfil_estudiante: int
-    id_usuario: int
+    id_perfil_estudiante: UUID  # ← Cambiado a UUID
+    id_usuario: UUID  # ← Cambiado a UUID
     
     class Config:
         from_attributes = True
@@ -34,8 +35,8 @@ class PerfilArrendadorCreate(PerfilArrendadorBase):
     pass
 
 class PerfilArrendadorResponse(PerfilArrendadorBase):
-    id_perfil_arrendador: int
-    id_usuario: int
+    id_perfil_arrendador: UUID  # ← Cambiado a UUID
+    id_usuario: UUID  # ← Cambiado a UUID
     
     class Config:
         from_attributes = True
@@ -58,7 +59,7 @@ class UsuarioUpdate(BaseModel):
     foto_perfil_url: Optional[str] = None
 
 class UsuarioResponse(UsuarioBase):
-    id_usuario: int
+    id_usuario: UUID  # ← Cambiado a UUID
     foto_perfil_url: Optional[str] = None
     activo: bool
     fecha_registro: datetime
@@ -78,6 +79,6 @@ class Token(BaseModel):
     user: UsuarioResponse
 
 class TokenData(BaseModel):
-    id_usuario: Optional[int] = None
+    id_usuario: Optional[UUID] = None  # ← Cambiado a UUID
     email: Optional[str] = None
     tipo_usuario: Optional[str] = None
