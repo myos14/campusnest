@@ -6,6 +6,7 @@ interface HeaderProps {
   searchValue?: string;
   onSearchChange?: (text: string) => void;
   showFilters?: boolean;
+  scrollY?: number;
 }
 
 export default function Header({ 

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal, Alert, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Modal, Alert, Platform, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
@@ -7,13 +7,20 @@ import { Colors, Spacing, FontSizes } from '../../constants/theme';
 
 interface NavbarProps {
   onMenuPress: () => void;
+  scrollY?: number; // Pasar el scroll desde el componente padre
 }
 
-export default function Navbar({ onMenuPress }: NavbarProps) {
+export default function Navbar({ onMenuPress, scrollY = 0 }: NavbarProps) {
   const [profileMenuVisible, setProfileMenuVisible] = useState(false);
   const [logoutConfirmVisible, setLogoutConfirmVisible] = useState(false);
   const { user, logout } = useAuth();
   const router = useRouter();
+
+  // Cambiar color basado en scroll
+  const isScrolled = scrollY > 10;
+  const navbarBg = isScrolled ? Colors.primary : Colors.white;
+  const textColor = isScrolled ? Colors.white : Colors.primary;
+  const iconColor = isScrolled ? Colors.white : Colors.primary;
 
   const handleLogout = async () => {
     setProfileMenuVisible(false);
@@ -76,15 +83,15 @@ export default function Navbar({ onMenuPress }: NavbarProps) {
   ];
 
   return (
-    <View style={styles.navbar}>
+    <View style={[styles.navbar, { backgroundColor: navbarBg }]}>
       <TouchableOpacity style={styles.menuButton} onPress={onMenuPress}>
-        <Ionicons name="menu" size={24} color={Colors.white} />
-        <Text style={styles.menuText}>Menú</Text>
+        <Ionicons name="menu" size={24} color={iconColor} />
+        <Text style={[styles.menuText, { color: textColor }]}>Menú</Text>
       </TouchableOpacity>
 
       <View style={styles.logoContainer}>
         <TouchableOpacity onPress={handleLogoPress}>
-          <Text style={styles.logo}>Roomie</Text>
+          <Text style={[styles.logo, { color: textColor }]}>Roomie</Text>
         </TouchableOpacity>
       </View>
 
@@ -94,7 +101,7 @@ export default function Navbar({ onMenuPress }: NavbarProps) {
             style={styles.profileButton}
             onPress={() => setProfileMenuVisible(true)}
           >
-            <Ionicons name="person-circle" size={32} color={Colors.white} />
+            <Ionicons name="person-circle" size={32} color={iconColor} />
           </TouchableOpacity>
 
           <Modal
@@ -185,7 +192,7 @@ export default function Navbar({ onMenuPress }: NavbarProps) {
             style={styles.authButton}
             onPress={() => router.push('/(auth)/login')}
           >
-            <Text style={styles.authButtonText}>Iniciar sesión</Text>
+            <Text style={[styles.authButtonText, { color: textColor }]}>Iniciar sesión</Text>
           </TouchableOpacity>
           
           <TouchableOpacity 
@@ -208,7 +215,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
     paddingTop: 10,
     paddingBottom: 12,
-    backgroundColor: Colors.primary,
     borderBottomWidth: 0,
     height: 65,
   },
@@ -222,7 +228,6 @@ const styles = StyleSheet.create({
   menuText: {
     fontSize: FontSizes.md,
     fontWeight: '500',
-    color: Colors.white,
   },
   logoContainer: {
     position: 'absolute',
@@ -234,7 +239,6 @@ const styles = StyleSheet.create({
   logo: {
     fontSize: FontSizes.xl,
     fontWeight: 'bold',
-    color: Colors.white,
   },
   profileContainer: {
     position: 'relative',
@@ -258,10 +262,9 @@ const styles = StyleSheet.create({
   authButtonText: {
     fontSize: FontSizes.sm,
     fontWeight: '500',
-    color: Colors.white,
   },
   registerButton: {
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: Colors.primary,
   },
   menuOverlay: {
     flex: 1,

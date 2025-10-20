@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, StyleSheet, ActivityIndicator, RefreshControl, TouchableOpacity, ScrollView } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import { propiedadesService } from '../../services/api';
 import type { Propiedad } from '../../types';
 import PropertyCard from '../../components/PropertyCard';
@@ -14,7 +13,8 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [busqueda, setBusqueda] = useState('');
-  const [distanciaMax, setDistanciaMax] = useState(5);
+  const [distanciaMax, setDistanciaMax] = useState(10); // Cambiado a 10 por defecto
+  const [scrollY, setScrollY] = useState(0);
   const router = useRouter();
   const params = useLocalSearchParams();
   const universidad = params.universidad as string;
@@ -25,7 +25,6 @@ export default function HomeScreen() {
 
   async function cargarPropiedades() {
     try {
-      // Si hay universidad, usar el endpoint de propiedades cercanas
       const data = universidad 
         ? await propiedadesService.obtenerPropiedadesCercanas({
             distancia_max: distanciaMax,
@@ -50,6 +49,10 @@ export default function HomeScreen() {
     await cargarPropiedades();
   }
 
+  const handleScroll = (event: any) => {
+    setScrollY(event.nativeEvent.contentOffset.y);
+  };
+
   const propiedadesFiltradas = propiedades.filter(p =>
     p.titulo.toLowerCase().includes(busqueda.toLowerCase()) ||
     p.colonia?.toLowerCase().includes(busqueda.toLowerCase())
@@ -70,80 +73,85 @@ export default function HomeScreen() {
         searchValue={busqueda}
         onSearchChange={setBusqueda}
         showFilters={true}
+        scrollY={scrollY}
       />
-
-      {/* Filtros rápidos horizontales */}
-      <ScrollView 
-        horizontal 
-        showsHorizontalScrollIndicator={false}
-        style={styles.filtersContainer}
-        contentContainerStyle={styles.filtersContent}
-      >
-        <TouchableOpacity style={styles.filterChip}>
-          <Text style={styles.filterChipText}>🛏️ Habitaciones</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.filterChip}>
-          <Text style={styles.filterChipText}>🏠 Departamentos</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.filterChip}>
-          <Text style={styles.filterChipText}>📶 WiFi</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.filterChip}>
-          <Text style={styles.filterChipText}>🅿️ Estacionamiento</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.filterChip}>
-          <Text style={styles.filterChipText}>🐾 Mascotas</Text>
-        </TouchableOpacity>
-      </ScrollView>
-
-      {/* Banner de universidad */}
-      {universidad && (
-        <View style={styles.universidadBanner}>
-          <Text style={styles.universidadIcon}>🎓</Text>
-          <View style={styles.universidadTextContainer}>
-            <Text style={styles.universidadTitle}>
-              Propiedades cerca de {universidad}
-            </Text>
-            <Text style={styles.universidadSubtitle}>
-              Mostrando opciones a menos de {distanciaMax} km
-            </Text>
-          </View>
-        </View>
-      )}
-
-      {/* Filtros de distancia (solo si hay universidad) */}
-      {universidad && (
-        <View style={styles.distanceFilters}>
-          <TouchableOpacity 
-            style={[styles.distanceButton, distanciaMax === 2 && styles.distanceButtonActive]}
-            onPress={() => setDistanciaMax(2)}
-          >
-            <Text style={[styles.distanceButtonText, distanciaMax === 2 && styles.distanceButtonTextActive]}>
-              Muy cerca (&lt;2km)
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={[styles.distanceButton, distanciaMax === 5 && styles.distanceButtonActive]}
-            onPress={() => setDistanciaMax(5)}
-          >
-            <Text style={[styles.distanceButtonText, distanciaMax === 5 && styles.distanceButtonTextActive]}>
-              Cerca (&lt;5km)
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={[styles.distanceButton, distanciaMax === 10 && styles.distanceButtonActive]}
-            onPress={() => setDistanciaMax(10)}
-          >
-            <Text style={[styles.distanceButtonText, distanciaMax === 10 && styles.distanceButtonTextActive]}>
-              Lejos (&lt;10km)
-            </Text>
-          </TouchableOpacity>
-        </View>
-      )}
 
       <FlatList
         data={propiedadesFiltradas}
         keyExtractor={(item) => item.id_propiedad}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+        ListHeaderComponent={
+          <>
+            {/* Filtros rápidos horizontales */}
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              style={styles.filtersContainer}
+              contentContainerStyle={styles.filtersContent}
+            >
+              <TouchableOpacity style={styles.filterChip}>
+                <Text style={styles.filterChipText}>🛏️ Habitaciones</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.filterChip}>
+                <Text style={styles.filterChipText}>🏠 Departamentos</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.filterChip}>
+                <Text style={styles.filterChipText}>📶 WiFi</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.filterChip}>
+                <Text style={styles.filterChipText}>🅿️ Estacionamiento</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.filterChip}>
+                <Text style={styles.filterChipText}>🐾 Mascotas</Text>
+              </TouchableOpacity>
+            </ScrollView>
+
+            {/* Banner de universidad (SIN EMOJI) */}
+            {universidad && (
+              <View style={styles.universidadBanner}>
+                <View style={styles.universidadTextContainer}>
+                  <Text style={styles.universidadTitle}>
+                    Propiedades cerca de {universidad}
+                  </Text>
+                  <Text style={styles.universidadSubtitle}>
+                    Mostrando opciones a menos de {distanciaMax} km
+                  </Text>
+                </View>
+              </View>
+            )}
+
+            {/* Filtros de distancia (solo si hay universidad) */}
+            {universidad && (
+              <View style={styles.distanceFilters}>
+                <TouchableOpacity 
+                  style={[styles.distanceButton, distanciaMax === 2 && styles.distanceButtonActive]}
+                  onPress={() => setDistanciaMax(2)}
+                >
+                  <Text style={[styles.distanceButtonText, distanciaMax === 2 && styles.distanceButtonTextActive]}>
+                    Muy cerca (&lt;2km)
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.distanceButton, distanciaMax === 5 && styles.distanceButtonActive]}
+                  onPress={() => setDistanciaMax(5)}
+                >
+                  <Text style={[styles.distanceButtonText, distanciaMax === 5 && styles.distanceButtonTextActive]}>
+                    Cerca (&lt;5km)
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.distanceButton, distanciaMax === 10 && styles.distanceButtonActive]}
+                  onPress={() => setDistanciaMax(10)}
+                >
+                  <Text style={[styles.distanceButtonText, distanciaMax === 10 && styles.distanceButtonTextActive]}>
+                    Lejos (&lt;10km)
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </>
+        }
         renderItem={({ item }) => (
           <PropertyCard
             propiedad={item}
@@ -215,10 +223,6 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.md,
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  universidadIcon: {
-    fontSize: 32,
-    marginRight: Spacing.md,
   },
   universidadTextContainer: {
     flex: 1,
