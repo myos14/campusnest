@@ -1,20 +1,11 @@
-"""
-Schemas Pydantic para Propiedades - Validación y serialización
-"""
-
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, validator
 from typing import Optional, List
 from datetime import datetime, date
+from uuid import UUID
 from decimal import Decimal
-import uuid
 
-
-# ============================================
-# CARACTERÍSTICAS DE PROPIEDAD
-# ============================================
-
+# ============= CARACTERÍSTICAS =============
 class CaracteristicaPropiedadBase(BaseModel):
-    """Base para características de propiedad"""
     wifi: bool = False
     agua_incluida: bool = False
     luz_incluida: bool = False
@@ -25,119 +16,115 @@ class CaracteristicaPropiedadBase(BaseModel):
     estacionamiento: bool = False
     mascotas_permitidas: bool = False
     banio_privado: bool = False
-    numero_camas: int = Field(default=1, ge=1)
-    numero_banios: int = Field(default=1, ge=1)
-    metros_cuadrados: Optional[Decimal] = Field(None, ge=0)
-
+    numero_camas: int = Field(default=1, ge=1, le=20)
+    numero_banios: int = Field(default=1, ge=1, le=10)
+    metros_cuadrados: Optional[Decimal] = None
 
 class CaracteristicaPropiedadCreate(CaracteristicaPropiedadBase):
-    """Schema para crear características"""
     pass
 
-
 class CaracteristicaPropiedadResponse(CaracteristicaPropiedadBase):
-    """Schema para respuesta de características"""
     id_caracteristica: int
+    id_propiedad: UUID
     
-    model_config = ConfigDict(from_attributes=True)
+    class Config:
+        from_attributes = True
 
-
-# ============================================
-# FOTOS DE PROPIEDAD
-# ============================================
-
+# ============= FOTOS =============
 class FotoPropiedadBase(BaseModel):
-    """Base para fotos de propiedad"""
     url_foto: str
     orden: int = 0
     es_principal: bool = False
 
-
 class FotoPropiedadCreate(FotoPropiedadBase):
-    """Schema para crear foto"""
     pass
 
-
 class FotoPropiedadResponse(FotoPropiedadBase):
-    """Schema para respuesta de foto"""
     id_foto: int
+    id_propiedad: UUID
     fecha_subida: datetime
     
-    model_config = ConfigDict(from_attributes=True)
+    class Config:
+        from_attributes = True
 
-
-# ============================================
-# PROPIEDAD
-# ============================================
-
+# ============= PROPIEDAD =============
 class PropiedadBase(BaseModel):
-    """Base para propiedad"""
     titulo: str = Field(..., min_length=10, max_length=255)
     descripcion: Optional[str] = None
-    tipo_propiedad: str = Field(..., pattern="^(cuarto_individual|cuarto_compartido|departamento|casa)$")
+    tipo_propiedad: str = Field(..., pattern="^(habitacion|departamento|casa|estudio)$")
     precio_mensual: Decimal = Field(..., gt=0)
     deposito_requerido: Optional[Decimal] = Field(None, ge=0)
     direccion_completa: str = Field(..., min_length=10)
-    latitud: Optional[Decimal] = Field(None, ge=-90, le=90)
-    longitud: Optional[Decimal] = Field(None, ge=-180, le=180)
+    latitud: Optional[Decimal] = None
+    longitud: Optional[Decimal] = None
     colonia: Optional[str] = None
-    codigo_postal: Optional[str] = Field(None, max_length=10)
+    codigo_postal: Optional[str] = None
     ciudad: str = "Puebla"
     estado: str = "Puebla"
-    disponible: bool = True
     fecha_disponibilidad: Optional[date] = None
 
-
 class PropiedadCreate(PropiedadBase):
-    """Schema para crear propiedad"""
-    caracteristicas: Optional[CaracteristicaPropiedadCreate] = None
-    fotos: Optional[List[FotoPropiedadCreate]] = None
-
+    caracteristicas: CaracteristicaPropiedadCreate
+    fotos: List[FotoPropiedadCreate] = []
+    
+    @validator('fotos')
+    def validar_fotos(cls, v):
+        if len(v) == 0:
+            raise ValueError('Debe incluir al menos una foto')
+        if len(v) > 20:
+            raise ValueError('Máximo 20 fotos permitidas')
+        
+        # Verificar que haya exactamente una foto principal
+        principales = [f for f in v if f.es_principal]
+        if len(principales) == 0:
+            # Si no hay principal, marcar la primera como principal
+            v[0].es_principal = True
+        elif len(principales) > 1:
+            raise ValueError('Solo puede haber una foto principal')
+        
+        return v
 
 class PropiedadUpdate(BaseModel):
-    """Schema para actualizar propiedad"""
     titulo: Optional[str] = Field(None, min_length=10, max_length=255)
     descripcion: Optional[str] = None
+    tipo_propiedad: Optional[str] = Field(None, pattern="^(habitacion|departamento|casa|estudio)$")
     precio_mensual: Optional[Decimal] = Field(None, gt=0)
     deposito_requerido: Optional[Decimal] = Field(None, ge=0)
+    direccion_completa: Optional[str] = Field(None, min_length=10)
+    latitud: Optional[Decimal] = None
+    longitud: Optional[Decimal] = None
+    colonia: Optional[str] = None
+    codigo_postal: Optional[str] = None
     disponible: Optional[bool] = None
     fecha_disponibilidad: Optional[date] = None
     caracteristicas: Optional[CaracteristicaPropiedadCreate] = None
 
-
 class PropiedadResponse(PropiedadBase):
-    """Schema para respuesta de propiedad"""
-    id_propiedad: uuid.UUID
-    id_arrendador: uuid.UUID
+    id_propiedad: UUID
+    id_arrendador: UUID
+    disponible: bool
     activa: bool
     fecha_publicacion: datetime
     fecha_actualizacion: datetime
-    
-    model_config = ConfigDict(from_attributes=True)
-
-
-class PropiedadDetalleResponse(PropiedadResponse):
-    """Schema para respuesta detallada con características y fotos"""
     caracteristicas: Optional[CaracteristicaPropiedadResponse] = None
     fotos: List[FotoPropiedadResponse] = []
     
-    model_config = ConfigDict(from_attributes=True)
+    class Config:
+        from_attributes = True
 
-
-# ============================================
-# FILTROS DE BÚSQUEDA
-# ============================================
-
-class PropiedadFiltros(BaseModel):
-    """Schema para filtros de búsqueda de propiedades"""
-    tipo_propiedad: Optional[str] = None
-    precio_min: Optional[Decimal] = Field(None, ge=0)
-    precio_max: Optional[Decimal] = Field(None, ge=0)
-    ciudad: Optional[str] = "Puebla"
-    colonia: Optional[str] = None
-    wifi: Optional[bool] = None
+class PropiedadListResponse(BaseModel):
+    """Response simplificado para listados (sin toda la info)"""
+    id_propiedad: UUID
+    titulo: str
+    tipo_propiedad: str
+    precio_mensual: Decimal
+    colonia: Optional[str]
+    ciudad: str
+    foto_principal: Optional[str] = None  # URL de la foto principal
+    numero_camas: Optional[int] = None
+    numero_banios: Optional[int] = None
     amueblado: Optional[bool] = None
-    mascotas_permitidas: Optional[bool] = None
-    disponible: bool = True
-    limit: int = Field(default=20, ge=1, le=100)
-    offset: int = Field(default=0, ge=0)
+    disponible: bool
+    
+    class Config:
+        from_attributes = True

@@ -25,8 +25,8 @@ class Settings(BaseSettings):
         "http://localhost:3000",
         "http://localhost:19006",
         "http://localhost:8081",
-        "https://campusnest.vercel.app",  # Tu frontend en Vercel
-        "*"  # En producción, especifica dominios exactos
+        "https://campusnest.vercel.app",
+        "*" 
     ]
     
     class Config:
