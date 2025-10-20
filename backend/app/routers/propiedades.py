@@ -17,7 +17,7 @@ from app.utils.universidades import (
 )
 import math
 
-router = APIRouter()
+router = APIRouter(prefix="/propiedades")
 
 
 def calcular_distancia(lat1: float, lon1: float, lat2: float, lon2: float) -> float:

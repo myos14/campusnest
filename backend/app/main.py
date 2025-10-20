@@ -19,7 +19,12 @@ app = FastAPI(
 # Configurar CORS para permitir requests desde frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:8081",
+        "https://campusnest-seven.vercel.app",
+        "https://*.vercel.app",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
