@@ -21,8 +21,8 @@ class PerfilEstudianteUpdate(BaseModel):
     email_institucional: Optional[EmailStr] = None
 
 class PerfilEstudianteResponse(PerfilEstudianteBase):
-    id_perfil_estudiante: UUID  # ← Cambiado a UUID
-    id_usuario: UUID  # ← Cambiado a UUID
+    id_perfil_estudiante: int  # ← INTEGER
+    id_usuario: UUID  # ← UUID
     
     class Config:
         from_attributes = True
@@ -35,8 +35,8 @@ class PerfilArrendadorCreate(PerfilArrendadorBase):
     pass
 
 class PerfilArrendadorResponse(PerfilArrendadorBase):
-    id_perfil_arrendador: UUID  # ← Cambiado a UUID
-    id_usuario: UUID  # ← Cambiado a UUID
+    id_perfil_arrendador: int  # ← INTEGER
+    id_usuario: UUID  # ← UUID
     
     class Config:
         from_attributes = True
@@ -59,7 +59,7 @@ class UsuarioUpdate(BaseModel):
     foto_perfil_url: Optional[str] = None
 
 class UsuarioResponse(UsuarioBase):
-    id_usuario: UUID  # ← Cambiado a UUID
+    id_usuario: UUID  # ← UUID
     foto_perfil_url: Optional[str] = None
     activo: bool
     fecha_registro: datetime
@@ -79,6 +79,6 @@ class Token(BaseModel):
     user: UsuarioResponse
 
 class TokenData(BaseModel):
-    id_usuario: Optional[UUID] = None  # ← Cambiado a UUID
+    id_usuario: Optional[UUID] = None  # ← UUID
     email: Optional[str] = None
     tipo_usuario: Optional[str] = None
