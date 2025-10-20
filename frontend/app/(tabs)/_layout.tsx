@@ -22,13 +22,7 @@ export default function TabsLayout() {
         tabBarActiveTintColor: Colors.primary,
         tabBarInactiveTintColor: Colors.neutral400,
         tabBarStyle: {
-          backgroundColor: Colors.white,
-          borderTopWidth: 1,
-          borderTopColor: Colors.neutral100,
-          height: 60,
-          paddingBottom: 8,
-          paddingTop: 8,
-        },
+          display: 'none'},
       }}
     >
       <Tabs.Screen

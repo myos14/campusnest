@@ -1,7 +1,8 @@
 // app/(tabs)/index.tsx
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet, ActivityIndicator, RefreshControl, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, RefreshControl, TouchableOpacity } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { propiedadesService } from '../../services/api';
 import type { Propiedad } from '../../types';
 import PropertyCard from '../../components/PropertyCard';
@@ -13,8 +14,9 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [busqueda, setBusqueda] = useState('');
-  const [distanciaMax, setDistanciaMax] = useState(10); // Cambiado a 10 por defecto
+  const [distanciaMax, setDistanciaMax] = useState(10);
   const [scrollY, setScrollY] = useState(0);
+  const [activeFilters, setActiveFilters] = useState<string[]>([]);
   const router = useRouter();
   const params = useLocalSearchParams();
   const universidad = params.universidad as string;
@@ -53,10 +55,32 @@ export default function HomeScreen() {
     setScrollY(event.nativeEvent.contentOffset.y);
   };
 
-  const propiedadesFiltradas = propiedades.filter(p =>
-    p.titulo.toLowerCase().includes(busqueda.toLowerCase()) ||
-    p.colonia?.toLowerCase().includes(busqueda.toLowerCase())
-  );
+  const handleFilterPress = (filter: string) => {
+    if (filter === 'mostrar_todos') {
+      // Aquí puedes abrir un modal con todos los filtros
+      console.log('Mostrar modal de filtros');
+      return;
+    }
+
+    setActiveFilters(prev => {
+      if (prev.includes(filter)) {
+        return prev.filter(f => f !== filter);
+      }
+      return [...prev, filter];
+    });
+  };
+
+  const propiedadesFiltradas = propiedades.filter(p => {
+    // Filtro de búsqueda por texto
+    const matchBusqueda = p.titulo.toLowerCase().includes(busqueda.toLowerCase()) ||
+      p.colonia?.toLowerCase().includes(busqueda.toLowerCase());
+    
+    // Aquí puedes agregar lógica para filtrar por activeFilters
+    // Por ejemplo:
+    // if (activeFilters.includes('wifi') && !p.amenidades?.includes('wifi')) return false;
+    
+    return matchBusqueda;
+  });
 
   if (loading) {
     return (
@@ -72,8 +96,9 @@ export default function HomeScreen() {
       <Header 
         searchValue={busqueda}
         onSearchChange={setBusqueda}
-        showFilters={true}
         scrollY={scrollY}
+        onFilterPress={handleFilterPress}
+        activeFilters={activeFilters}
       />
 
       <FlatList
@@ -83,33 +108,12 @@ export default function HomeScreen() {
         scrollEventThrottle={16}
         ListHeaderComponent={
           <>
-            {/* Filtros rápidos horizontales */}
-            <ScrollView 
-              horizontal 
-              showsHorizontalScrollIndicator={false}
-              style={styles.filtersContainer}
-              contentContainerStyle={styles.filtersContent}
-            >
-              <TouchableOpacity style={styles.filterChip}>
-                <Text style={styles.filterChipText}>🛏️ Habitaciones</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.filterChip}>
-                <Text style={styles.filterChipText}>🏠 Departamentos</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.filterChip}>
-                <Text style={styles.filterChipText}>📶 WiFi</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.filterChip}>
-                <Text style={styles.filterChipText}>🅿️ Estacionamiento</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.filterChip}>
-                <Text style={styles.filterChipText}>🐾 Mascotas</Text>
-              </TouchableOpacity>
-            </ScrollView>
-
-            {/* Banner de universidad (SIN EMOJI) */}
+            {/* Banner de universidad - Solo si hay universidad seleccionada */}
             {universidad && (
               <View style={styles.universidadBanner}>
+                <View style={styles.universidadIcon}>
+                  <Ionicons name="school" size={24} color={Colors.white} />
+                </View>
                 <View style={styles.universidadTextContainer}>
                   <Text style={styles.universidadTitle}>
                     Propiedades cerca de {universidad}
@@ -121,7 +125,7 @@ export default function HomeScreen() {
               </View>
             )}
 
-            {/* Filtros de distancia (solo si hay universidad) */}
+            {/* Filtros de distancia - Solo si hay universidad */}
             {universidad && (
               <View style={styles.distanceFilters}>
                 <TouchableOpacity 
@@ -150,6 +154,18 @@ export default function HomeScreen() {
                 </TouchableOpacity>
               </View>
             )}
+
+            {/* Indicador de resultados */}
+            <View style={styles.resultsIndicator}>
+              <Text style={styles.resultsText}>
+                {propiedadesFiltradas.length} {propiedadesFiltradas.length === 1 ? 'propiedad' : 'propiedades'}
+              </Text>
+              {activeFilters.length > 0 && (
+                <TouchableOpacity onPress={() => setActiveFilters([])}>
+                  <Text style={styles.clearFilters}>Limpiar filtros</Text>
+                </TouchableOpacity>
+              )}
+            </View>
           </>
         }
         renderItem={({ item }) => (
@@ -163,15 +179,23 @@ export default function HomeScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[Colors.primary]} />
         }
         ListEmptyComponent={
-          <View style={styles.empty}>
-            <Text style={styles.emptyIcon}>🏠</Text>
+          <View style={styles.emptyState}>
+            <Ionicons name="home-outline" size={64} color={Colors.neutral200} />
             <Text style={styles.emptyTitle}>No hay propiedades disponibles</Text>
             <Text style={styles.emptyText}>
               {universidad 
                 ? `No hay propiedades cerca de ${universidad}` 
-                : 'Intenta ajustar tu búsqueda'
+                : 'Intenta ajustar tu búsqueda o filtros'
               }
             </Text>
+            {activeFilters.length > 0 && (
+              <TouchableOpacity 
+                style={styles.clearFiltersButton}
+                onPress={() => setActiveFilters([])}
+              >
+                <Text style={styles.clearFiltersButtonText}>Limpiar filtros</Text>
+              </TouchableOpacity>
+            )}
           </View>
         }
       />
@@ -195,34 +219,28 @@ const styles = StyleSheet.create({
     color: Colors.neutral400,
     fontSize: FontSizes.md,
   },
-  filtersContainer: {
-    backgroundColor: Colors.white,
-    paddingVertical: Spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.neutral100,
-  },
-  filtersContent: {
-    paddingHorizontal: Spacing.xl,
-    gap: Spacing.sm,
-  },
-  filterChip: {
-    backgroundColor: Colors.neutral50,
-    borderRadius: BorderRadius.full,
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.lg,
-    marginRight: Spacing.sm,
-  },
-  filterChipText: {
-    fontSize: FontSizes.sm,
-    color: Colors.neutral700,
-  },
   universidadBanner: {
     backgroundColor: Colors.primary,
     margin: Spacing.xl,
+    marginBottom: Spacing.md,
     padding: Spacing.lg,
-    borderRadius: BorderRadius.md,
+    borderRadius: BorderRadius.lg,
     flexDirection: 'row',
     alignItems: 'center',
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  universidadIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: BorderRadius.md,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: Spacing.md,
   },
   universidadTextContainer: {
     flex: 1,
@@ -234,7 +252,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   universidadSubtitle: {
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: 'rgba(255, 255, 255, 0.85)',
     fontSize: FontSizes.sm,
   },
   distanceFilters: {
@@ -246,7 +264,7 @@ const styles = StyleSheet.create({
   distanceButton: {
     flex: 1,
     backgroundColor: Colors.white,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: Colors.neutral200,
     borderRadius: BorderRadius.full,
     paddingVertical: Spacing.sm + 2,
@@ -259,32 +277,60 @@ const styles = StyleSheet.create({
   distanceButtonText: {
     color: Colors.neutral700,
     fontSize: FontSizes.sm,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   distanceButtonTextActive: {
     color: Colors.white,
   },
-  list: {
-    padding: Spacing.xl,
+  resultsIndicator: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.md,
   },
-  empty: {
+  resultsText: {
+    fontSize: FontSizes.sm,
+    color: Colors.neutral600,
+    fontWeight: '500',
+  },
+  clearFilters: {
+    fontSize: FontSizes.sm,
+    color: Colors.primary,
+    fontWeight: '600',
+  },
+  list: {
+    paddingHorizontal: Spacing.xl,
+    paddingBottom: Spacing.xl,
+  },
+  emptyState: {
     padding: 60,
     alignItems: 'center',
-  },
-  emptyIcon: {
-    fontSize: 64,
-    marginBottom: Spacing.lg,
+    justifyContent: 'center',
   },
   emptyTitle: {
     fontSize: FontSizes.xl,
     fontWeight: '600',
     color: Colors.neutral900,
-    marginTop: Spacing.md,
+    marginTop: Spacing.lg,
+    marginBottom: Spacing.sm,
   },
   emptyText: {
     fontSize: FontSizes.md,
-    color: Colors.neutral400,
-    marginTop: Spacing.sm,
+    color: Colors.neutral500,
     textAlign: 'center',
+    lineHeight: 24,
+  },
+  clearFiltersButton: {
+    marginTop: Spacing.lg,
+    backgroundColor: Colors.primary,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.xl,
+    borderRadius: BorderRadius.full,
+  },
+  clearFiltersButtonText: {
+    color: Colors.white,
+    fontSize: FontSizes.md,
+    fontWeight: '600',
   },
 });
