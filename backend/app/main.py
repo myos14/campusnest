@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
-from app.routers import auth, propiedades, rentas, favoritos, calificaciones
 
 app = FastAPI(
     title="CampusNest API",
@@ -14,11 +13,7 @@ app = FastAPI(
 # CORS - DEBE IR ANTES DE LOS ROUTERS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://localhost:8081",
-        "https://campusnest-seven.vercel.app",
-    ],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -40,7 +35,8 @@ def health_check():
         "environment": settings.ENVIRONMENT
     }
 
-# Incluir routers
+from app.routers import auth, propiedades, rentas, favoritos, calificaciones
+
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["Autenticación"])
 app.include_router(propiedades.router, prefix="/api/v1", tags=["Propiedades"])
 app.include_router(rentas.router, prefix="/api/v1", tags=["Rentas y Reportes"])

@@ -16,11 +16,10 @@ export default function Navbar({ onMenuPress, scrollY = 0 }: NavbarProps) {
   const { user, logout } = useAuth();
   const router = useRouter();
 
-  // Cambiar color basado en scroll
-  const isScrolled = scrollY > 10;
-  const navbarBg = isScrolled ? Colors.primary : Colors.white;
-  const textColor = isScrolled ? Colors.white : Colors.primary;
-  const iconColor = isScrolled ? Colors.white : Colors.primary;
+  // Colores fijos - navbar siempre azul
+  const navbarBg = Colors.primary;
+  const textColor = Colors.white;
+  const iconColor = Colors.white;
 
   const handleLogout = async () => {
     setProfileMenuVisible(false);
