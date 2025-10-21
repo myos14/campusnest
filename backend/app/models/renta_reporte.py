@@ -27,6 +27,7 @@ class Renta(Base):
     estudiante = relationship("Usuario", foreign_keys=[id_estudiante])
     propiedad = relationship("Propiedad")
     arrendador = relationship("Usuario", foreign_keys=[id_arrendador])
+    pagos = relationship("Pago", back_populates="renta")
 
 
 class ReporteInquilino(Base):

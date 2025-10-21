@@ -128,3 +128,16 @@ class PropiedadListResponse(BaseModel):
     
     class Config:
         from_attributes = True
+
+class PropiedadDetalleResponse(PropiedadBase):
+    """Schema detallado de propiedad con información del arrendador"""
+    id_propiedad: int
+    id_arrendador: str
+    fecha_publicacion: datetime
+    
+    # Información del arrendador (opcional)
+    nombre_arrendador: Optional[str] = None
+    telefono_arrendador: Optional[str] = None
+    
+    class Config:
+        from_attributes = True

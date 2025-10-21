@@ -12,3 +12,13 @@ __all__ = [
     "Renta", 
     "ReporteInquilino"
 ]
+
+from app.models.mensajes_notificaciones_pagos import (
+    Mensaje, 
+    Notificacion, 
+    ConfiguracionNotificacionesUsuario,
+    Pago,
+    TipoNotificacion,
+    EstadoPago,
+    MetodoPago
+)

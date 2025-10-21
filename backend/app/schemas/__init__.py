@@ -12,7 +12,7 @@ from app.schemas.usuario import (
 from app.schemas.propiedad import (
     PropiedadCreate, PropiedadUpdate, PropiedadResponse, PropiedadDetalleResponse,
     CaracteristicaPropiedadCreate, CaracteristicaPropiedadResponse,
-    FotoPropiedadCreate, FotoPropiedadResponse, PropiedadFiltros
+    FotoPropiedadCreate, FotoPropiedadResponse
 )
 
 __all__ = [
@@ -22,5 +22,5 @@ __all__ = [
     "UsuarioLogin", "Token", "TokenData",
     "PropiedadCreate", "PropiedadUpdate", "PropiedadResponse", "PropiedadDetalleResponse",
     "CaracteristicaPropiedadCreate", "CaracteristicaPropiedadResponse",
-    "FotoPropiedadCreate", "FotoPropiedadResponse", "PropiedadFiltros"
+    "FotoPropiedadCreate", "FotoPropiedadResponse"
 ]
