@@ -38,7 +38,7 @@ class Propiedad(Base):
     arrendador = relationship("Usuario", back_populates="propiedades")
     caracteristicas = relationship("CaracteristicaPropiedad", back_populates="propiedad", uselist=False, cascade="all, delete-orphan")
     fotos = relationship("FotoPropiedad", back_populates="propiedad", cascade="all, delete-orphan")
-    mensajes = relationship("Mensaje", back_populates="propiedad")
+    # mensajes = relationship("Mensaje", back_populates="propiedad")
 
 
 class CaracteristicaPropiedad(Base):
