@@ -27,12 +27,11 @@ class Mensaje(Base):
     contenido = Column(Text, nullable=False)
     leido = Column(Boolean, default=False)
     fecha_envio = Column(DateTime(timezone=True), server_default=func.now())
-    id_propiedad = Column(Integer, ForeignKey("propiedades.id_propiedad", ondelete="SET NULL"), nullable=True)
-    
+    id_propiedad = Column(UUID(as_uuid=True), ForeignKey("propiedades.id_propiedad", ondelete="SET NULL"), nullable=True)    
     # Relaciones
     remitente = relationship("Usuario", foreign_keys=[id_remitente], backref="mensajes_enviados")
     destinatario = relationship("Usuario", foreign_keys=[id_destinatario], backref="mensajes_recibidos")
-    propiedad = relationship("Propiedad", backref="mensajes")
+    propiedad = relationship("Propiedad", back_populates="mensajes", foreign_keys=[id_propiedad])
 
 
 # ============================================================================
@@ -134,4 +133,4 @@ class Pago(Base):
     fecha_actualizacion = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     
     # Relaciones
-    renta = relationship("Renta", backref="pagos")
+    renta = relationship("Renta", back_populates="pagos")
