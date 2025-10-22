@@ -60,7 +60,7 @@ app.add_middleware(
 # Router de autenticación (login, register, etc.)
 app.include_router(
     auth.router,
-    prefix="/api/v1",
+    prefix="/api/v1/auth",
     tags=["Autenticación"]
 )
 
