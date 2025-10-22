@@ -1,8 +1,3 @@
-/**
- * Tipos TypeScript para CampusNest
- * ACTUALIZADO CON NUEVOS MÓDULOS
- */
-
 // ============================================================================
 // TIPOS EXISTENTES (no modificar)
 // ============================================================================
@@ -49,6 +44,7 @@ export interface RegisterData {
   nombre_completo: string;
   tipo_usuario: 'estudiante' | 'arrendador' | 'ambos';
   telefono?: string;
+  foto_perfil_url?: string;
   perfil_estudiante?: {
     universidad?: string;
     carrera?: string;
@@ -184,10 +180,6 @@ export interface ReporteInquilino {
 export interface ApiError {
   detail: string | Array<{ msg: string; type: string }>;
 }
-
-// ============================================================================
-// NUEVOS TIPOS - MÓDULOS AGREGADOS
-// ============================================================================
 
 // ============================================================================
 // UPLOAD DE IMÁGENES
