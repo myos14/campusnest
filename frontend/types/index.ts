@@ -1,6 +1,11 @@
 /**
  * Tipos TypeScript para CampusNest
+ * ACTUALIZADO CON NUEVOS MÓDULOS
  */
+
+// ============================================================================
+// TIPOS EXISTENTES (no modificar)
+// ============================================================================
 
 // Usuario
 export interface Usuario {
@@ -67,8 +72,8 @@ export interface AuthService {
   isAuthenticated(): Promise<boolean>;
   getToken(): Promise<string | null>;
   getCurrentUser(): Promise<Usuario>;
-  updateUser(user: Usuario): Promise<void>; // 👈 NUEVO
-  getStoredUser(): Promise<Usuario | null>; // 👈 NUEVO
+  updateUser(user: Usuario): Promise<void>;
+  getStoredUser(): Promise<Usuario | null>;
 }
 
 // Propiedad
@@ -178,4 +183,139 @@ export interface ReporteInquilino {
 // API Response
 export interface ApiError {
   detail: string | Array<{ msg: string; type: string }>;
+}
+
+// ============================================================================
+// NUEVOS TIPOS - MÓDULOS AGREGADOS
+// ============================================================================
+
+// ============================================================================
+// UPLOAD DE IMÁGENES
+// ============================================================================
+
+export interface ImageUploadResponse {
+  url: string;
+  public_id: string;
+  width?: number;
+  height?: number;
+  format?: string;
+}
+
+export interface MultipleImageUploadResponse {
+  total_subidas: number;
+  imagenes: ImageUploadResponse[];
+}
+
+// ============================================================================
+// NOTIFICACIONES
+// ============================================================================
+
+export type TipoNotificacion =
+  | 'nueva_solicitud_renta'
+  | 'renta_aprobada'
+  | 'renta_rechazada'
+  | 'nuevo_mensaje'
+  | 'nueva_calificacion'
+  | 'pago_pendiente'
+  | 'pago_recibido'
+  | 'propiedad_favorita_actualizada'
+  | 'recordatorio_visita'
+  | 'nuevo_reporte';
+
+export interface Notificacion {
+  id_notificacion: number;
+  tipo: TipoNotificacion;
+  titulo: string;
+  mensaje: string;
+  leida: boolean;
+  fecha_creacion: string;
+  id_relacionado?: number;
+  url_accion?: string;
+}
+
+export interface ConfiguracionNotificaciones {
+  email_nuevas_solicitudes: boolean;
+  email_mensajes: boolean;
+  email_calificaciones: boolean;
+  email_pagos: boolean;
+  push_nuevas_solicitudes: boolean;
+  push_mensajes: boolean;
+  push_calificaciones: boolean;
+  push_pagos: boolean;
+}
+
+// ============================================================================
+// MENSAJERÍA
+// ============================================================================
+
+export interface Mensaje {
+  id_mensaje: number;
+  id_remitente: string;
+  id_destinatario: string;
+  contenido: string;
+  leido: boolean;
+  fecha_envio: string;
+  id_propiedad?: number;
+}
+
+export interface MensajeCreate {
+  id_destinatario: string;
+  contenido: string;
+  id_propiedad?: number;
+}
+
+export interface Conversacion {
+  id_usuario: string;
+  nombre_usuario: string;
+  foto_usuario?: string;
+  ultimo_mensaje: string;
+  fecha_ultimo_mensaje: string;
+  mensajes_no_leidos: number;
+}
+
+export interface WebSocketMessage {
+  tipo: 'mensaje' | 'typing' | 'nuevo_mensaje';
+  id_remitente?: string;
+  remitente_nombre?: string;
+  id_destinatario?: string;
+  contenido?: string;
+  fecha?: string;
+  escribiendo?: boolean;
+}
+
+// ============================================================================
+// PAGOS
+// ============================================================================
+
+export type MetodoPago = 'stripe' | 'openpay' | 'transferencia' | 'efectivo';
+export type EstadoPago = 'pendiente' | 'completado' | 'fallido' | 'reembolsado' | 'cancelado';
+
+export interface Pago {
+  id_pago: number;
+  id_renta: number;
+  monto: number;
+  metodo_pago: MetodoPago;
+  estado: EstadoPago;
+  fecha_pago: string;
+  referencia_externa?: string;
+  comprobante_url?: string;
+}
+
+export interface PagoCreate {
+  id_renta: number;
+  monto: number;
+  metodo_pago: MetodoPago;
+}
+
+export interface PagoIntencionResponse {
+  id_pago: number;
+  client_secret?: string;
+  payment_intent_id?: string;
+  message?: string;
+  cuenta_bancaria?: string;
+}
+
+export interface PagoConfirmar {
+  payment_intent_id: string;
+  id_renta: number;
 }

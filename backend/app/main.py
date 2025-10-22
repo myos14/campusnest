@@ -17,10 +17,11 @@ from app.routers import (
     rentas,            # Router de rentas y reportes
     favoritos,         # Router de favoritos
     calificaciones,    # Router de calificaciones
-    upload,            # Router de upload de imágenes (NUEVO)
-    pagos,             # Router de pagos (NUEVO)
-    mensajes,          # Router de mensajería (NUEVO)
-    notificaciones     # Router de notificaciones (NUEVO)
+    usuarios,          # Router de usuarios
+    upload,            # Router de upload de imágenes
+    pagos,             # Router de pagos
+    mensajes,          # Router de mensajería
+    notificaciones     # Router de notificaciones
 )
 
 # ============================================================================
@@ -64,6 +65,13 @@ app.include_router(
     tags=["Autenticación"]
 )
 
+# Router de usuarios (perfil, actualizar datos)
+app.include_router(
+    usuarios.router,
+    prefix="/api/v1/usuarios",
+    tags=["Usuarios"]
+)
+
 # Router de propiedades (CRUD de propiedades)
 app.include_router(
     propiedades.router,
@@ -93,7 +101,7 @@ app.include_router(
 )
 
 # ============================================================================
-# NUEVOS ROUTERS (Los que acabas de agregar)
+# NUEVOS ROUTERS
 # ============================================================================
 
 # Router de upload de imágenes (Cloudinary)

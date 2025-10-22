@@ -1,29 +1,28 @@
-// app/(tabs)/perfil.tsx - VERSIÓN CORREGIDA SIN PLACEHOLDERS
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, Image } from 'react-native';
 import { CustomInput } from '../../components/FormElements';
 import { Colors, Spacing, FontSizes, BorderRadius } from '../../constants/theme';
 import { useAuth } from '../../context/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
-import axios from 'axios';
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://campusnest-api.onrender.com';
+import { usuariosService } from '../../services/api';
+import { uploadService } from '../../services/uploadService';
 
 export default function PerfilScreen() {
   const { user, token, logout } = useAuth();
   
-  // Estados para los campos editables
   const [nombreCompleto, setNombreCompleto] = useState('');
   const [telefono, setTelefono] = useState('');
+  const [fotoPerfil, setFotoPerfil] = useState<string | null>(null);
   const [universidad, setUniversidad] = useState('');
   const [carrera, setCarrera] = useState('');
   const [semestre, setSemestre] = useState('');
   
   const [loading, setLoading] = useState(true);
   const [guardando, setGuardando] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [activeSection, setActiveSection] = useState('cuenta');
+  const [errors, setErrors] = useState<{telefono?: string}>({});
 
-  // Cargar datos del usuario al abrir la pantalla
   useEffect(() => {
     if (user) {
       cargarDatosUsuario();
@@ -33,16 +32,12 @@ export default function PerfilScreen() {
   const cargarDatosUsuario = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`${API_URL}/usuarios/me`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      const userData = response.data;
+      const userData = await usuariosService.obtenerPerfil();
       
       setNombreCompleto(userData.nombre_completo || '');
       setTelefono(userData.telefono || '');
+      setFotoPerfil(userData.foto_perfil_url || null);
       
-      // Datos de perfil estudiante
       if (userData.perfil_estudiante) {
         setUniversidad(userData.perfil_estudiante.universidad || '');
         setCarrera(userData.perfil_estudiante.carrera || '');
@@ -56,19 +51,46 @@ export default function PerfilScreen() {
     }
   };
 
+  const handleSelectImage = async () => {
+    try {
+      setUploadingImage(true);
+      const imageUri = await uploadService.seleccionarImagen();
+      
+      if (imageUri) {
+        const resultado = await uploadService.subirImagen(imageUri);
+        await usuariosService.actualizarPerfil({ foto_perfil_url: resultado.url });
+        setFotoPerfil(resultado.url);
+        Alert.alert('Éxito', 'Foto de perfil actualizada correctamente');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'No se pudo actualizar la foto de perfil');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const validatePhone = (phone: string): boolean => {
+    if (!phone) return true;
+    const phoneRegex = /^[0-9]{10}$/;
+    return phoneRegex.test(phone.replace(/\s/g, ''));
+  };
+
   const handleGuardarDatosBasicos = async () => {
+    const newErrors: {telefono?: string} = {};
+
+    if (telefono && !validatePhone(telefono)) {
+      newErrors.telefono = 'Ingresa un teléfono válido de 10 dígitos';
+    }
+
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) return;
+
     setGuardando(true);
     try {
-      await axios.put(
-        `${API_URL}/usuarios/me`,
-        {
-          nombre_completo: nombreCompleto,
-          telefono: telefono || null,
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
+      await usuariosService.actualizarPerfil({
+        nombre_completo: nombreCompleto,
+        telefono: telefono || undefined,
+      });
       
       Alert.alert('Éxito', 'Datos básicos actualizados correctamente');
     } catch (error: any) {
@@ -82,17 +104,7 @@ export default function PerfilScreen() {
   const handleGuardarPerfilEstudiante = async () => {
     setGuardando(true);
     try {
-      await axios.put(
-        `${API_URL}/usuarios/me/perfil-estudiante`,
-        {
-          universidad: universidad || null,
-          carrera: carrera || null,
-          semestre: semestre ? parseInt(semestre) : null,
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
+      await usuariosService.actualizarUniversidad(universidad || '');
       
       Alert.alert('Éxito', 'Perfil de estudiante actualizado correctamente');
     } catch (error: any) {
@@ -149,13 +161,18 @@ export default function PerfilScreen() {
           <View style={styles.phoneInput}>
             <CustomInput 
               value={telefono}
-              onChangeText={setTelefono}
+              onChangeText={(text) => {
+                setTelefono(text);
+                if (errors.telefono) setErrors({...errors, telefono: undefined});
+              }}
               placeholder=""
               keyboardType="phone-pad"
               editable={!guardando}
+              maxLength={10}
             />
           </View>
         </View>
+        {errors.telefono && <Text style={styles.errorText}>{errors.telefono}</Text>}
       </View>
 
       <TouchableOpacity 
@@ -274,14 +291,14 @@ export default function PerfilScreen() {
       </View>
 
       <TouchableOpacity style={styles.primaryButton}>
-        <Text style={styles.primaryButtonText}>Publicar nueva propiedad</Text>
+        <Text style={styles.primaryButtonText}>Ver mis propiedades</Text>
       </TouchableOpacity>
 
       <View style={styles.emptyRentas}>
-        <Ionicons name="business-outline" size={64} color={Colors.neutral300} />
-        <Text style={styles.emptyTitle}>No tienes propiedades en renta</Text>
+        <Ionicons name="home-outline" size={64} color={Colors.neutral300} />
+        <Text style={styles.emptyTitle}>No tienes propiedades publicadas</Text>
         <Text style={styles.emptySubtitle}>
-          Comienza publicando tu primera propiedad para llegar a más estudiantes.
+          Comienza publicando tu primera propiedad para conectar con estudiantes.
         </Text>
       </View>
     </View>
@@ -297,19 +314,34 @@ export default function PerfilScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Header con foto y nombre */}
       <View style={styles.profileHeader}>
         <View style={styles.avatarSection}>
           <View style={styles.avatarContainer}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>{obtenerIniciales()}</Text>
-            </View>
-            <TouchableOpacity style={styles.editPhotoButton}>
-              <Ionicons name="camera-outline" size={16} color={Colors.primary} />
-              <Text style={styles.editPhotoText}>Cambiar foto</Text>
+            <TouchableOpacity 
+              style={styles.avatar}
+              onPress={handleSelectImage}
+              disabled={uploadingImage}
+            >
+              {uploadingImage ? (
+                <ActivityIndicator color={Colors.white} />
+              ) : fotoPerfil ? (
+                <Image source={{ uri: fotoPerfil }} style={styles.avatarImage} />
+              ) : (
+                <Text style={styles.avatarText}>{obtenerIniciales()}</Text>
+              )}
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.editPhotoButton}
+              onPress={handleSelectImage}
+              disabled={uploadingImage}
+            >
+              <Ionicons name="camera" size={16} color={Colors.primary} />
+              <Text style={styles.editPhotoText}>
+                {uploadingImage ? 'Subiendo...' : 'Editar foto'}
+              </Text>
             </TouchableOpacity>
           </View>
-          
+
           <View style={styles.profileInfo}>
             <Text style={styles.name}>{nombreCompleto || 'Usuario'}</Text>
             <Text style={styles.email}>{user?.email}</Text>
@@ -323,7 +355,6 @@ export default function PerfilScreen() {
         </View>
       </View>
 
-      {/* Navegación por pestañas */}
       <View style={styles.tabContainer}>
         <TouchableOpacity 
           style={[styles.tab, activeSection === 'cuenta' && styles.activeTab]}
@@ -355,7 +386,6 @@ export default function PerfilScreen() {
         )}
       </View>
 
-      {/* Contenido de la sección activa */}
       <ScrollView style={styles.content}>
         {activeSection === 'cuenta' && renderSeccionCuenta()}
         {activeSection === 'general' && renderSeccionGeneral()}
@@ -397,6 +427,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: Spacing.sm,
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
   },
   avatarText: {
     color: Colors.white,
@@ -509,6 +544,12 @@ const styles = StyleSheet.create({
     color: Colors.neutral500,
     marginTop: Spacing.xs,
     fontStyle: 'italic',
+  },
+  errorText: {
+    color: Colors.error,
+    fontSize: FontSizes.xs,
+    marginTop: Spacing.xs,
+    marginLeft: Spacing.sm,
   },
   phoneContainer: {
     flexDirection: 'row',

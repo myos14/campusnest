@@ -9,21 +9,47 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<{email?: string; password?: string}>({});
+  
   const { login } = useAuth();
   const router = useRouter();
 
+  function validateEmail(email: string): boolean {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  }
+
+  function validateForm(): boolean {
+    const newErrors: {email?: string; password?: string} = {};
+
+    if (!email.trim()) {
+      newErrors.email = 'El correo electrónico es requerido';
+    } else if (!validateEmail(email)) {
+      newErrors.email = 'Ingresa un correo electrónico válido';
+    }
+
+    if (!password) {
+      newErrors.password = 'La contraseña es requerida';
+    } else if (password.length < 8) {
+      newErrors.password = 'La contraseña debe tener al menos 8 caracteres';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  }
+
   async function handleLogin() {
-    if (!email || !password) {
-      Alert.alert('Error', 'Por favor completa todos los campos');
+    if (!validateForm()) {
       return;
     }
 
     setLoading(true);
     try {
-      await login({ email, password });
+      await login({ email: email.trim().toLowerCase(), password });
       router.replace('/(tabs)');
     } catch (error: any) {
-      Alert.alert('Error', error.response?.data?.detail || 'Error al iniciar sesión');
+      const errorMessage = error.response?.data?.detail || 'Error al iniciar sesión. Verifica tus credenciales.';
+      Alert.alert('Error de autenticación', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -42,7 +68,6 @@ export default function LoginScreen() {
 
         <View style={styles.card}>
           <View style={styles.tabContainer}>
-            {/* TAB LOGIN - SIEMPRE ACTIVO en esta pantalla */}
             <TouchableOpacity 
               style={[styles.tab, styles.activeTab]}
               disabled={true}
@@ -50,7 +75,6 @@ export default function LoginScreen() {
               <Text style={[styles.tabText, styles.activeTabText]}>Iniciar Sesión</Text>
             </TouchableOpacity>
             
-            {/* TAB REGISTER - Solo para navegar */}
             <TouchableOpacity 
               style={styles.tab}
               onPress={() => router.replace('/(auth)/register')}
@@ -60,24 +84,36 @@ export default function LoginScreen() {
           </View>
 
           <View style={styles.form}>
-            <CustomInput
-              label="Correo electrónico"
-              placeholder=""
-              value={email}
-              onChangeText={setEmail}
-              autoCapitalize="none"
-              keyboardType="email-address"
-              editable={!loading}
-            />
+            <View style={styles.inputWrapper}>
+              <CustomInput
+                label="Correo electrónico"
+                placeholder=""
+                value={email}
+                onChangeText={(text) => {
+                  setEmail(text);
+                  if (errors.email) setErrors({...errors, email: undefined});
+                }}
+                autoCapitalize="none"
+                keyboardType="email-address"
+                editable={!loading}
+              />
+              {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+            </View>
 
-            <CustomInput
-              label="Contraseña"
-              placeholder=""
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              editable={!loading}
-            />
+            <View style={styles.inputWrapper}>
+              <CustomInput
+                label="Contraseña"
+                placeholder=""
+                value={password}
+                onChangeText={(text) => {
+                  setPassword(text);
+                  if (errors.password) setErrors({...errors, password: undefined});
+                }}
+                secureTextEntry
+                editable={!loading}
+              />
+              {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
+            </View>
 
             <View style={styles.rememberContainer}>
               <TouchableOpacity style={styles.rememberCheck}>
@@ -171,6 +207,15 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   form: {},
+  inputWrapper: {
+    marginBottom: Spacing.sm,
+  },
+  errorText: {
+    color: Colors.error,
+    fontSize: FontSizes.xs,
+    marginTop: Spacing.xs,
+    marginLeft: Spacing.sm,
+  },
   rememberContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -187,7 +232,7 @@ const styles = StyleSheet.create({
     width: 18,
     height: 18,
     borderWidth: 2,
-    borderColor: Colors.neutral100,
+    borderColor: Colors.neutral200,
     borderRadius: BorderRadius.sm,
   },
   rememberText: {
@@ -207,7 +252,7 @@ const styles = StyleSheet.create({
     marginTop: Spacing.sm,
   },
   buttonDisabled: {
-    backgroundColor: Colors.neutral100,
+    backgroundColor: Colors.neutral300,
   },
   buttonText: {
     color: Colors.white,

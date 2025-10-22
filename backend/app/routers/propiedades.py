@@ -81,8 +81,7 @@ def get_propiedades(
     
     # Filtrar por disponibilidad
     if disponible:
-        query = query.filter(Propiedad.disponibilidad == "disponible")
-    
+        query = query.filter(Propiedad.disponible == True)    
     # Filtrar por tipo
     if tipo:
         query = query.filter(Propiedad.tipo == tipo)
