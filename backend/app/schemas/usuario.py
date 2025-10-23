@@ -50,6 +50,7 @@ class UsuarioBase(BaseModel):
 
 class UsuarioCreate(UsuarioBase):
     password: str = Field(..., min_length=8)
+    foto_perfil_url: Optional[str] = None
     perfil_estudiante: Optional[PerfilEstudianteCreate] = None
     perfil_arrendador: Optional[PerfilArrendadorCreate] = None
 
