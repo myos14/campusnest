@@ -18,7 +18,7 @@ from app.schemas.usuario import (
 )
 from app.utils.security import get_password_hash, verify_password, create_access_token
 from app.config import settings
-from app.utils.dependencies import get_current_user  # CAMBIADO AQUÍ
+from app.utils.dependencies import get_current_user
 
 router = APIRouter()
 
@@ -37,60 +37,95 @@ def register(
     - **nombre_completo**: Nombre completo del usuario
     """
     
-    # Verificar si el email ya existe
-    existing_user = db.query(Usuario).filter(Usuario.email == user_data.email).first()
-    if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="El email ya está registrado"
+    # DEBUG: Imprimir datos recibidos
+    print("=" * 60)
+    print("📝 REGISTER - Datos recibidos:")
+    print(f"Email: {user_data.email}")
+    print(f"Nombre: {user_data.nombre_completo}")
+    print(f"Tipo: {user_data.tipo_usuario}")
+    print(f"Teléfono: {user_data.telefono}")
+    print(f"Foto URL: {user_data.foto_perfil_url}")
+    print(f"Perfil Estudiante: {user_data.perfil_estudiante}")
+    print(f"Perfil Arrendador: {user_data.perfil_arrendador}")
+    print("=" * 60)
+    
+    try:
+        # Verificar si el email ya existe
+        existing_user = db.query(Usuario).filter(Usuario.email == user_data.email).first()
+        if existing_user:
+            print(f"❌ ERROR: Email {user_data.email} ya existe")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="El email ya está registrado"
+            )
+        
+        # Crear usuario (AGREGADO foto_perfil_url)
+        db_user = Usuario(
+            email=user_data.email,
+            password_hash=get_password_hash(user_data.password),
+            tipo_usuario=user_data.tipo_usuario,
+            nombre_completo=user_data.nombre_completo,
+            telefono=user_data.telefono,
+            foto_perfil_url=user_data.foto_perfil_url,  # ✅ AGREGADO
+        )
+        
+        db.add(db_user)
+        db.flush()  # Para obtener el id_usuario antes de commit
+        
+        print(f"✅ Usuario creado con ID: {db_user.id_usuario}")
+        
+        # Crear perfil según tipo de usuario
+        if user_data.tipo_usuario in ["estudiante", "ambos"]:
+            if user_data.perfil_estudiante:
+                perfil_est = PerfilEstudiante(
+                    id_usuario=db_user.id_usuario,
+                    universidad=user_data.perfil_estudiante.universidad,
+                    carrera=user_data.perfil_estudiante.carrera,
+                    semestre=user_data.perfil_estudiante.semestre,
+                    email_institucional=user_data.perfil_estudiante.email_institucional,
+                )
+                db.add(perfil_est)
+                print(f"✅ Perfil estudiante creado")
+        
+        if user_data.tipo_usuario in ["arrendador", "ambos"]:
+            if user_data.perfil_arrendador:
+                perfil_arr = PerfilArrendador(
+                    id_usuario=db_user.id_usuario,
+                    rfc=user_data.perfil_arrendador.rfc,
+                )
+                db.add(perfil_arr)
+                print(f"✅ Perfil arrendador creado")
+        
+        db.commit()
+        db.refresh(db_user)
+        
+        print(f"✅ Usuario registrado exitosamente: {db_user.email}")
+        print(f"   Foto URL guardada: {db_user.foto_perfil_url}")
+        print("=" * 60)
+        
+        # Generar token JWT
+        access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = create_access_token(
+            data={"sub": str(db_user.id_usuario)},
+            expires_delta=access_token_expires
+        )
+        
+        return Token(
+            access_token=access_token,
+            user=UsuarioResponse.model_validate(db_user)
         )
     
-    # Crear usuario
-    db_user = Usuario(
-        email=user_data.email,
-        password_hash=get_password_hash(user_data.password),
-        tipo_usuario=user_data.tipo_usuario,
-        nombre_completo=user_data.nombre_completo,
-        telefono=user_data.telefono,
-    )
-    
-    db.add(db_user)
-    db.flush()  # Para obtener el id_usuario antes de commit
-    
-    # Crear perfil según tipo de usuario (USANDO STRINGS)
-    if user_data.tipo_usuario in ["estudiante", "ambos"]:
-        if user_data.perfil_estudiante:
-            perfil_est = PerfilEstudiante(
-                id_usuario=db_user.id_usuario,
-                universidad=user_data.perfil_estudiante.universidad,
-                carrera=user_data.perfil_estudiante.carrera,
-                semestre=user_data.perfil_estudiante.semestre,
-                email_institucional=user_data.perfil_estudiante.email_institucional,
-            )
-            db.add(perfil_est)
-    
-    if user_data.tipo_usuario in ["arrendador", "ambos"]:
-        if user_data.perfil_arrendador:
-            perfil_arr = PerfilArrendador(
-                id_usuario=db_user.id_usuario,
-                rfc=user_data.perfil_arrendador.rfc,
-            )
-            db.add(perfil_arr)
-    
-    db.commit()
-    db.refresh(db_user)
-    
-    # Generar token JWT
-    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        data={"sub": str(db_user.id_usuario)},
-        expires_delta=access_token_expires
-    )
-    
-    return Token(
-        access_token=access_token,
-        user=UsuarioResponse.model_validate(db_user)
-    )
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        print(f"❌ ERROR EN REGISTER: {type(e).__name__}: {str(e)}")
+        import traceback
+        print(traceback.format_exc())
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Error al crear usuario: {str(e)}"
+        )
 
 
 @router.post("/login", response_model=Token)
