@@ -101,33 +101,43 @@ export default function RegisterScreen() {
     }
   }
 
-  async function handleRegister() {
-    if (!validateForm()) {
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const registerData = {
-        email: email.trim().toLowerCase(),
-        password,
-        nombre_completo: nombreCompleto.trim(),
-        tipo_usuario: tipoUsuario,
-        telefono: telefono ? telefono.replace(/\s/g, '') : undefined,
-        foto_perfil_url: fotoUrl || undefined,
-        perfil_estudiante: (tipoUsuario === 'estudiante' || tipoUsuario === 'ambos') ? {} : undefined,
-        perfil_arrendador: (tipoUsuario === 'arrendador' || tipoUsuario === 'ambos') ? {} : undefined,
-      };
-
-      await register(registerData);
-      router.replace('/(tabs)');
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.detail || 'Error al registrarse. Intenta de nuevo.';
-      Alert.alert('Error', errorMessage);
-    } finally {
-      setLoading(false);
-    }
+async function handleRegister() {
+  if (!validateForm()) {
+    return;
   }
+
+  setLoading(true);
+  try {
+    // Crear objeto base solo con campos requeridos
+    const registerData: any = {
+      email: email.trim().toLowerCase(),
+      password,
+      nombre_completo: nombreCompleto.trim(),
+      tipo_usuario: tipoUsuario,
+    };
+
+    // Solo agregar campos opcionales si tienen valor
+    if (telefono && telefono.trim()) {
+      registerData.telefono = telefono.replace(/\s/g, '');
+    }
+
+    if (fotoUrl) {
+      registerData.foto_perfil_url = fotoUrl;
+    }
+
+    // NO enviar perfil_estudiante ni perfil_arrendador vacíos
+    console.log('📤 Enviando registro:', JSON.stringify(registerData, null, 2));
+
+    await register(registerData);
+    router.replace('/(tabs)');
+  } catch (error: any) {
+    console.error('❌ Error en registro:', error);
+    const errorMessage = error.response?.data?.detail || 'Error al registrarse. Intenta de nuevo.';
+    Alert.alert('Error', errorMessage);
+  } finally {
+    setLoading(false);
+  }
+}
 
   const passwordStrength = getPasswordStrength(password);
 
