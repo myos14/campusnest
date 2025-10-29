@@ -22,7 +22,8 @@ export default function TabsLayout() {
         tabBarActiveTintColor: Colors.primary,
         tabBarInactiveTintColor: Colors.neutral400,
         tabBarStyle: {
-          display: 'none'},
+          display: 'none'
+        },
       }}
     >
       <Tabs.Screen
@@ -72,6 +73,12 @@ export default function TabsLayout() {
           tabBarIcon: ({ color }) => <Ionicons name="notifications" size={24} color={color} />,
         }}
       />
+
+      {/* Ocultar screens que existen pero no se muestran en tabs */}
+      <Tabs.Screen name="favorites" options={{ href: null }} />
+      <Tabs.Screen name="messages" options={{ href: null }} />
+      <Tabs.Screen name="reports" options={{ href: null }} />
+      <Tabs.Screen name="settings" options={{ href: null }} />
     </Tabs>
   );
 }

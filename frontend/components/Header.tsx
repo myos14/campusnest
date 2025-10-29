@@ -1,239 +1,320 @@
-import React from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Animated } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Modal, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Spacing, FontSizes, BorderRadius } from '../constants/theme';
+import { useRouter } from 'expo-router';
+import { useAuth } from '../context/AuthContext';
+import { Colors, Spacing, FontSizes, BorderRadius, Shadows } from '../constants/theme';
 
 interface HeaderProps {
-  searchValue?: string;
-  onSearchChange?: (text: string) => void;
-  scrollY?: number;
-  onFilterPress?: (filter: string) => void;
-  activeFilters?: string[];
+  onLoginPress?: () => void;
+  onRegisterPress?: () => void;
 }
 
-export default function Header({
-  searchValue = '',
-  onSearchChange,
-  scrollY = 0,
-  onFilterPress,
-  activeFilters = []
-}: HeaderProps) {
-  // El header se comprime cuando se scrollea más de 80px
-  const isScrolled = scrollY > 80;
+export default function Header({ onLoginPress, onRegisterPress }: HeaderProps) {
+  const [menuVisible, setMenuVisible] = useState(false);
+  const { isAuthenticated, user, logout } = useAuth();
+  const router = useRouter();
+
+  const handleLogin = () => {
+    setMenuVisible(false);
+    if (onLoginPress) {
+      onLoginPress();
+    } else {
+      router.push('/(auth)/login');
+    }
+  };
+
+  const handleRegister = () => {
+    setMenuVisible(false);
+    if (onRegisterPress) {
+      onRegisterPress();
+    } else {
+      router.push('/(auth)/register');
+    }
+  };
+
+  const handleBecomeHost = () => {
+    setMenuVisible(false);
+    if (isAuthenticated) {
+      router.push('/(tabs)/my-properties');
+    } else {
+      handleLogin();
+    }
+  };
+
+  const handleLogout = async () => {
+    setMenuVisible(false);
+    await logout();
+    router.replace('/');
+  };
 
   return (
-    <View style={[
-      styles.header,
-      isScrolled && styles.headerCompact
-    ]}>
-      {/* Search Bar - Siempre visible */}
-      <View style={styles.searchContainer}>
-        <View style={styles.searchBar}>
-          <Ionicons name="search" size={20} color={Colors.neutral400} style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Buscar por zona, colonia..."
-            value={searchValue}
-            onChangeText={onSearchChange}
-            placeholderTextColor={Colors.neutral400}
-          />
-          {searchValue.length > 0 && (
-            <TouchableOpacity onPress={() => onSearchChange?.('')}>
-              <Ionicons name="close-circle" size={20} color={Colors.neutral400} />
-            </TouchableOpacity>
-          )}
-        </View>
+    <View style={styles.header}>
+      {/* Logo */}
+      <TouchableOpacity onPress={() => router.push('/')}>
+        <Text style={styles.logo}>Roomie</Text>
+      </TouchableOpacity>
+
+      {/* Tabs de categorías (centro) - Opcional para versión 2 */}
+      <View style={styles.centerTabs}>
+        <TouchableOpacity style={styles.tab}>
+          <Text style={[styles.tabText, styles.tabActive]}>Alojamientos</Text>
+        </TouchableOpacity>
       </View>
 
-      {/* Filtros - Se ocultan al scrollear */}
-      {!isScrolled && (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.filtersContainer}
-          contentContainerStyle={styles.filtersContent}
+      {/* Right Actions */}
+      <View style={styles.rightActions}>
+        {/* Botón "Conviértete en anfitrión" */}
+        <TouchableOpacity 
+          style={styles.becomeHostButton}
+          onPress={handleBecomeHost}
         >
-          <FilterChip
-            icon="bed-outline"
-            label="Habitaciones"
-            active={activeFilters.includes('habitaciones')}
-            onPress={() => onFilterPress?.('habitaciones')}
-          />
-          <FilterChip
-            icon="business-outline"
-            label="Departamentos"
-            active={activeFilters.includes('departamentos')}
-            onPress={() => onFilterPress?.('departamentos')}
-          />
-          <FilterChip
-            icon="wifi-outline"
-            label="WiFi"
-            active={activeFilters.includes('wifi')}
-            onPress={() => onFilterPress?.('wifi')}
-          />
-          <FilterChip
-            icon="car-outline"
-            label="Estacionamiento"
-            active={activeFilters.includes('estacionamiento')}
-            onPress={() => onFilterPress?.('estacionamiento')}
-          />
-          <FilterChip
-            icon="paw-outline"
-            label="Mascotas"
-            active={activeFilters.includes('mascotas')}
-            onPress={() => onFilterPress?.('mascotas')}
-          />
-        </ScrollView>
-      )}
+          <Text style={styles.becomeHostText}>Conviértete en anfitrión</Text>
+        </TouchableOpacity>
 
-      {/* Botón de filtros compacto - Solo visible al scrollear */}
-      {isScrolled && (
-        <View style={styles.compactFilterContainer}>
-          <TouchableOpacity 
-            style={styles.compactFilterButton}
-            onPress={() => onFilterPress?.('mostrar_todos')}
-          >
-            <Ionicons name="options-outline" size={18} color={Colors.neutral700} />
-            <Text style={styles.compactFilterText}>Filtros</Text>
-            {activeFilters.length > 0 && (
-              <View style={styles.filterBadge}>
-                <Text style={styles.filterBadgeText}>{activeFilters.length}</Text>
-              </View>
+        {/* Botón de menú (hamburguesa + avatar) */}
+        <TouchableOpacity 
+          style={styles.menuButton}
+          onPress={() => setMenuVisible(true)}
+        >
+          <Ionicons name="menu" size={24} color={Colors.neutral700} />
+          {isAuthenticated && user?.nombre_completo ? (
+            <View style={styles.avatarSmall}>
+              <Text style={styles.avatarText}>
+                {user.nombre_completo.charAt(0).toUpperCase()}
+              </Text>
+            </View>
+          ) : (
+            <Ionicons name="person-circle-outline" size={28} color={Colors.neutral500} />
+          )}
+        </TouchableOpacity>
+      </View>
+
+      {/* Modal del menú desplegable */}
+      <Modal
+        visible={menuVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setMenuVisible(false)}
+      >
+        <Pressable 
+          style={styles.modalOverlay}
+          onPress={() => setMenuVisible(false)}
+        >
+          <View style={styles.menuDropdown}>
+            {isAuthenticated ? (
+              // Menú para usuarios autenticados
+              <>
+                <TouchableOpacity 
+                  style={styles.menuItem}
+                  onPress={() => {
+                    setMenuVisible(false);
+                    router.push('/(tabs)/perfil');
+                  }}
+                >
+                  <Ionicons name="person-outline" size={20} color={Colors.neutral700} />
+                  <Text style={styles.menuItemText}>Perfil</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={styles.menuItem}
+                  onPress={() => {
+                    setMenuVisible(false);
+                    router.push('/(tabs)/favorites');
+                  }}
+                >
+                  <Ionicons name="heart-outline" size={20} color={Colors.neutral700} />
+                  <Text style={styles.menuItemText}>Favoritos</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={styles.menuItem}
+                  onPress={() => {
+                    setMenuVisible(false);
+                    router.push('/(tabs)/messages');
+                  }}
+                >
+                  <Ionicons name="chatbubble-outline" size={20} color={Colors.neutral700} />
+                  <Text style={styles.menuItemText}>Mensajes</Text>
+                </TouchableOpacity>
+
+                <View style={styles.menuDivider} />
+
+                <TouchableOpacity 
+                  style={styles.menuItem}
+                  onPress={handleBecomeHost}
+                >
+                  <Ionicons name="home-outline" size={20} color={Colors.neutral700} />
+                  <Text style={styles.menuItemText}>Mis propiedades</Text>
+                </TouchableOpacity>
+
+                <View style={styles.menuDivider} />
+
+                <TouchableOpacity 
+                  style={styles.menuItem}
+                  onPress={handleLogout}
+                >
+                  <Ionicons name="log-out-outline" size={20} color={Colors.error} />
+                  <Text style={[styles.menuItemText, { color: Colors.error }]}>Cerrar sesión</Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              // Menú para usuarios no autenticados
+              <>
+                <TouchableOpacity 
+                  style={styles.menuItem}
+                  onPress={handleLogin}
+                >
+                  <Text style={[styles.menuItemText, styles.menuItemBold]}>Iniciar sesión</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={styles.menuItem}
+                  onPress={handleRegister}
+                >
+                  <Text style={styles.menuItemText}>Registrarse</Text>
+                </TouchableOpacity>
+
+                <View style={styles.menuDivider} />
+
+                <TouchableOpacity 
+                  style={styles.menuItem}
+                  onPress={handleBecomeHost}
+                >
+                  <Text style={styles.menuItemText}>Conviértete en anfitrión</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={styles.menuItem}
+                  onPress={() => setMenuVisible(false)}
+                >
+                  <Text style={styles.menuItemText}>Centro de ayuda</Text>
+                </TouchableOpacity>
+              </>
             )}
-          </TouchableOpacity>
-        </View>
-      )}
+          </View>
+        </Pressable>
+      </Modal>
     </View>
-  );
-}
-
-// Componente reutilizable para los chips de filtro
-interface FilterChipProps {
-  icon: keyof typeof Ionicons.glyphMap;
-  label: string;
-  active?: boolean;
-  onPress?: () => void;
-}
-
-function FilterChip({ icon, label, active = false, onPress }: FilterChipProps) {
-  return (
-    <TouchableOpacity
-      style={[
-        styles.filterChip,
-        active && styles.filterChipActive
-      ]}
-      onPress={onPress}
-    >
-      <Ionicons
-        name={icon}
-        size={16}
-        color={active ? Colors.white : Colors.neutral700}
-      />
-      <Text style={[
-        styles.filterChipText,
-        active && styles.filterChipTextActive
-      ]}>
-        {label}
-      </Text>
-    </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.lg,
     backgroundColor: Colors.white,
     borderBottomWidth: 1,
     borderBottomColor: Colors.neutral100,
-    paddingTop: Spacing.md,
-    paddingBottom: Spacing.md,
+    shadowColor: Colors.black,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
-  headerCompact: {
-    paddingBottom: Spacing.sm,
+  logo: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: Colors.primary,
   },
-  searchContainer: {
-    paddingHorizontal: Spacing.xl,
-    marginBottom: Spacing.sm,
-  },
-  searchBar: {
+  centerTabs: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.neutral50,
-    borderRadius: BorderRadius.full,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-  },
-  searchIcon: {
-    marginRight: Spacing.sm,
-  },
-  searchInput: {
+    gap: Spacing.lg,
     flex: 1,
+    justifyContent: 'center',
+  },
+  tab: {
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+  },
+  tabText: {
     fontSize: FontSizes.md,
+    color: Colors.neutral500,
+    fontWeight: '500',
+  },
+  tabActive: {
     color: Colors.neutral900,
+    fontWeight: '600',
   },
-  filtersContainer: {
-    paddingBottom: Spacing.xs,
+  rightActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
   },
-  filtersContent: {
-    paddingHorizontal: Spacing.xl,
+  becomeHostButton: {
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.full,
+  },
+  becomeHostText: {
+    fontSize: FontSizes.sm,
+    fontWeight: '600',
+    color: Colors.neutral700,
+  },
+  menuButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: Spacing.sm,
-  },
-  filterChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-    backgroundColor: Colors.white,
+    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.sm,
     borderWidth: 1,
     borderColor: Colors.neutral200,
     borderRadius: BorderRadius.full,
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.lg,
-    marginRight: Spacing.sm,
-  },
-  filterChipActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
-  },
-  filterChipText: {
-    fontSize: FontSizes.sm,
-    color: Colors.neutral700,
-    fontWeight: '500',
-  },
-  filterChipTextActive: {
-    color: Colors.white,
-  },
-  compactFilterContainer: {
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.xs,
-  },
-  compactFilterButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
     backgroundColor: Colors.white,
-    borderWidth: 1,
-    borderColor: Colors.neutral200,
-    borderRadius: BorderRadius.full,
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.lg,
-    alignSelf: 'flex-start',
   },
-  compactFilterText: {
-    fontSize: FontSizes.sm,
-    color: Colors.neutral700,
-    fontWeight: '500',
-  },
-  filterBadge: {
+  avatarSmall: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     backgroundColor: Colors.primary,
-    borderRadius: BorderRadius.full,
-    width: 20,
-    height: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: Spacing.xs,
   },
-  filterBadgeText: {
+  avatarText: {
     color: Colors.white,
-    fontSize: 11,
-    fontWeight: '700',
+    fontSize: FontSizes.sm,
+    fontWeight: '600',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-end',
+    paddingTop: 70,
+    paddingRight: Spacing.xl,
+  },
+  menuDropdown: {
+    backgroundColor: Colors.white,
+    borderRadius: BorderRadius.lg,
+    paddingVertical: Spacing.sm,
+    minWidth: 240,
+    shadowColor: Colors.black,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+  },
+  menuItemText: {
+    fontSize: FontSizes.md,
+    color: Colors.neutral700,
+  },
+  menuItemBold: {
+    fontWeight: '600',
+  },
+  menuDivider: {
+    height: 1,
+    backgroundColor: Colors.neutral100,
+    marginVertical: Spacing.xs,
   },
 });
