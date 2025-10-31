@@ -93,6 +93,7 @@ export interface Propiedad {
   activa: boolean;
   fecha_publicacion: string;
   fecha_actualizacion: string;
+  distancia?: number;
   caracteristicas?: CaracteristicaPropiedad;
   fotos?: FotoPropiedad[];
 }

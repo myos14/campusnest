@@ -1,116 +1,154 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal, Pressable } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { View, Text, TouchableOpacity, StyleSheet, Platform, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
-import { Colors, Spacing, FontSizes, BorderRadius, Shadows } from '../constants/theme';
+import { Colors, Spacing, FontSizes, BorderRadius } from '../constants/theme';
 
-interface HeaderProps {
-  onLoginPress?: () => void;
-  onRegisterPress?: () => void;
-}
-
-export default function Header({ onLoginPress, onRegisterPress }: HeaderProps) {
-  const [menuVisible, setMenuVisible] = useState(false);
+export default function Header() {
+  const [showMenu, setShowMenu] = useState(false);
   const { isAuthenticated, user, logout } = useAuth();
   const router = useRouter();
-
-  const handleLogin = () => {
-    setMenuVisible(false);
-    if (onLoginPress) {
-      onLoginPress();
-    } else {
-      router.push('/(auth)/login');
-    }
-  };
-
-  const handleRegister = () => {
-    setMenuVisible(false);
-    if (onRegisterPress) {
-      onRegisterPress();
-    } else {
-      router.push('/(auth)/register');
-    }
-  };
-
-  const handleBecomeHost = () => {
-    setMenuVisible(false);
-    if (isAuthenticated) {
-      router.push('/(tabs)/my-properties');
-    } else {
-      handleLogin();
-    }
-  };
+  const { width } = useWindowDimensions();
+  
+  // Detectar si es móvil
+  const isMobile = width < 768;
+  const isTablet = width >= 768 && width < 1024;
 
   const handleLogout = async () => {
-    setMenuVisible(false);
-    await logout();
-    router.replace('/');
+    try {
+      await logout();
+      setShowMenu(false);
+      router.replace('/(auth)/login');
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error);
+    }
+  };
+
+  const handleMenuItemPress = (route: string) => {
+    setShowMenu(false);
+    router.push(route as any);
   };
 
   return (
-    <View style={styles.header}>
-      {/* Logo */}
-      <TouchableOpacity onPress={() => router.push('/')}>
-        <Text style={styles.logo}>Roomie</Text>
-      </TouchableOpacity>
-
-      {/* Tabs de categorías (centro) - Opcional para versión 2 */}
-      <View style={styles.centerTabs}>
-        <TouchableOpacity style={styles.tab}>
-          <Text style={[styles.tabText, styles.tabActive]}>Alojamientos</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Right Actions */}
-      <View style={styles.rightActions}>
-        {/* Botón "Conviértete en anfitrión" */}
+    <View style={styles.container}>
+      <View style={[styles.header, isMobile && styles.headerMobile]}>
+        {/* Logo */}
         <TouchableOpacity 
-          style={styles.becomeHostButton}
-          onPress={handleBecomeHost}
+          onPress={() => router.push('/(tabs)')}
+          style={styles.logoContainer}
         >
-          <Text style={styles.becomeHostText}>Conviértete en anfitrión</Text>
+          <Text style={[styles.logo, isMobile && styles.logoMobile]}>Roomie</Text>
         </TouchableOpacity>
 
-        {/* Botón de menú (hamburguesa + avatar) */}
-        <TouchableOpacity 
-          style={styles.menuButton}
-          onPress={() => setMenuVisible(true)}
-        >
-          <Ionicons name="menu" size={24} color={Colors.neutral700} />
-          {isAuthenticated && user?.nombre_completo ? (
-            <View style={styles.avatarSmall}>
-              <Text style={styles.avatarText}>
-                {user.nombre_completo.charAt(0).toUpperCase()}
+        {/* Derecha */}
+        <View style={styles.rightSection}>
+          {/* Botón Anfitrión - Adaptativo */}
+          {isAuthenticated ? (
+            <TouchableOpacity 
+              style={[styles.hostButton, isMobile && styles.hostButtonMobile]}
+              onPress={() => handleMenuItemPress('/profile/my-properties')}
+            >
+              <Text style={[styles.hostButtonText, isMobile && styles.hostButtonTextMobile]}>
+                {isMobile ? 'Publicar' : isTablet ? 'Mi propiedad' : 'Publica tu propiedad'}
               </Text>
-            </View>
+            </TouchableOpacity>
           ) : (
-            <Ionicons name="person-circle-outline" size={28} color={Colors.neutral500} />
+            <TouchableOpacity 
+              style={[styles.hostButton, isMobile && styles.hostButtonMobile]}
+              onPress={() => router.push('/(auth)/login')}
+            >
+              <Text style={[styles.hostButtonText, isMobile && styles.hostButtonTextMobile]}>
+                {isMobile ? 'Publicar' : 'Publicar propiedad'}
+              </Text>
+            </TouchableOpacity>
           )}
-        </TouchableOpacity>
+
+          {/* Menú hamburguesa (móvil) o botón normal (desktop) */}
+          {isMobile ? (
+            <TouchableOpacity 
+              style={styles.menuButtonMobile}
+              onPress={() => setShowMenu(!showMenu)}
+            >
+              <Ionicons 
+                name={showMenu ? "close" : "menu"} 
+                size={24} 
+                color={Colors.neutral700} 
+              />
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity 
+              style={styles.menuButton}
+              onPress={() => setShowMenu(!showMenu)}
+            >
+              <Ionicons name="menu" size={18} color={Colors.neutral700} />
+              <View style={styles.avatarPlaceholder}>
+                <Ionicons name="person" size={18} color={Colors.neutral700} />
+              </View>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
-      {/* Modal del menú desplegable */}
-      <Modal
-        visible={menuVisible}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setMenuVisible(false)}
-      >
-        <Pressable 
-          style={styles.modalOverlay}
-          onPress={() => setMenuVisible(false)}
-        >
-          <View style={styles.menuDropdown}>
+      {/* Dropdown Menu - Adaptativo */}
+      {showMenu && (
+        <>
+          {/* Overlay para cerrar el menú al hacer click fuera */}
+          <TouchableOpacity 
+            style={styles.overlay}
+            onPress={() => setShowMenu(false)}
+            activeOpacity={1}
+          />
+          
+          <View style={[
+            styles.dropdown, 
+            isMobile ? styles.dropdownMobile : styles.dropdownDesktop
+          ]}>
             {isAuthenticated ? (
-              // Menú para usuarios autenticados
               <>
+                {/* Header del menú - Solo en móvil */}
+                {isMobile && user && (
+                  <View style={styles.menuHeader}>
+                    <View style={styles.menuAvatar}>
+                      <Ionicons name="person" size={24} color={Colors.white} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.menuUserName} numberOfLines={1}>
+                        {user.nombre_completo || 'Usuario'}
+                      </Text>
+                      <Text style={styles.menuUserEmail} numberOfLines={1}>
+                        {user.email}
+                      </Text>
+                    </View>
+                  </View>
+                )}
+
+                {/* Enlaces de navegación - Solo en móvil */}
+                {isMobile && (
+                  <>
+                    <TouchableOpacity 
+                      style={styles.menuItem}
+                      onPress={() => handleMenuItemPress('/(tabs)')}
+                    >
+                      <Ionicons name="home-outline" size={20} color={Colors.neutral700} />
+                      <Text style={styles.menuItemText}>Inicio</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity 
+                      style={styles.menuItem}
+                      onPress={() => handleMenuItemPress('/(tabs)/favorites')}
+                    >
+                      <Ionicons name="heart-outline" size={20} color={Colors.neutral700} />
+                      <Text style={styles.menuItemText}>Favoritos</Text>
+                    </TouchableOpacity>
+
+                    <View style={styles.menuDivider} />
+                  </>
+                )}
+
                 <TouchableOpacity 
                   style={styles.menuItem}
-                  onPress={() => {
-                    setMenuVisible(false);
-                    router.push('/(tabs)/perfil');
-                  }}
+                  onPress={() => handleMenuItemPress('/(tabs)/perfil')}
                 >
                   <Ionicons name="person-outline" size={20} color={Colors.neutral700} />
                   <Text style={styles.menuItemText}>Perfil</Text>
@@ -118,33 +156,25 @@ export default function Header({ onLoginPress, onRegisterPress }: HeaderProps) {
 
                 <TouchableOpacity 
                   style={styles.menuItem}
-                  onPress={() => {
-                    setMenuVisible(false);
-                    router.push('/(tabs)/favorites');
-                  }}
-                >
-                  <Ionicons name="heart-outline" size={20} color={Colors.neutral700} />
-                  <Text style={styles.menuItemText}>Favoritos</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity 
-                  style={styles.menuItem}
-                  onPress={() => {
-                    setMenuVisible(false);
-                    router.push('/(tabs)/messages');
-                  }}
+                  onPress={() => handleMenuItemPress('/(tabs)/messages')}
                 >
                   <Ionicons name="chatbubble-outline" size={20} color={Colors.neutral700} />
                   <Text style={styles.menuItemText}>Mensajes</Text>
                 </TouchableOpacity>
 
-                <View style={styles.menuDivider} />
+                <TouchableOpacity 
+                  style={styles.menuItem}
+                  onPress={() => handleMenuItemPress('/profile/notifications')}
+                >
+                  <Ionicons name="notifications-outline" size={20} color={Colors.neutral700} />
+                  <Text style={styles.menuItemText}>Notificaciones</Text>
+                </TouchableOpacity>
 
                 <TouchableOpacity 
                   style={styles.menuItem}
-                  onPress={handleBecomeHost}
+                  onPress={() => handleMenuItemPress('/profile/my-properties')}
                 >
-                  <Ionicons name="home-outline" size={20} color={Colors.neutral700} />
+                  <Ionicons name="business-outline" size={20} color={Colors.neutral700} />
                   <Text style={styles.menuItemText}>Mis propiedades</Text>
                 </TouchableOpacity>
 
@@ -152,151 +182,218 @@ export default function Header({ onLoginPress, onRegisterPress }: HeaderProps) {
 
                 <TouchableOpacity 
                   style={styles.menuItem}
+                  onPress={() => handleMenuItemPress('/profile/settings')}
+                >
+                  <Ionicons name="settings-outline" size={20} color={Colors.neutral700} />
+                  <Text style={styles.menuItemText}>Configuración</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={styles.menuItem}
                   onPress={handleLogout}
                 >
                   <Ionicons name="log-out-outline" size={20} color={Colors.error} />
-                  <Text style={[styles.menuItemText, { color: Colors.error }]}>Cerrar sesión</Text>
+                  <Text style={[styles.menuItemText, { color: Colors.error }]}>
+                    Cerrar sesión
+                  </Text>
                 </TouchableOpacity>
               </>
             ) : (
-              // Menú para usuarios no autenticados
               <>
-                <TouchableOpacity 
-                  style={styles.menuItem}
-                  onPress={handleLogin}
-                >
-                  <Text style={[styles.menuItemText, styles.menuItemBold]}>Iniciar sesión</Text>
-                </TouchableOpacity>
+                {/* Menú no autenticado - Móvil */}
+                {isMobile && (
+                  <>
+                    <TouchableOpacity 
+                      style={styles.menuItem}
+                      onPress={() => handleMenuItemPress('/(tabs)')}
+                    >
+                      <Ionicons name="home-outline" size={20} color={Colors.neutral700} />
+                      <Text style={styles.menuItemText}>Inicio</Text>
+                    </TouchableOpacity>
+                    <View style={styles.menuDivider} />
+                  </>
+                )}
 
                 <TouchableOpacity 
                   style={styles.menuItem}
-                  onPress={handleRegister}
+                  onPress={() => handleMenuItemPress('/(auth)/register')}
                 >
+                  <Ionicons name="person-add-outline" size={20} color={Colors.neutral700} />
                   <Text style={styles.menuItemText}>Registrarse</Text>
                 </TouchableOpacity>
 
-                <View style={styles.menuDivider} />
-
                 <TouchableOpacity 
                   style={styles.menuItem}
-                  onPress={handleBecomeHost}
+                  onPress={() => handleMenuItemPress('/(auth)/login')}
                 >
-                  <Text style={styles.menuItemText}>Conviértete en anfitrión</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity 
-                  style={styles.menuItem}
-                  onPress={() => setMenuVisible(false)}
-                >
-                  <Text style={styles.menuItemText}>Centro de ayuda</Text>
+                  <Ionicons name="log-in-outline" size={20} color={Colors.primary} />
+                  <Text style={[styles.menuItemText, { color: Colors.primary, fontWeight: '600' }]}>
+                    Iniciar sesión
+                  </Text>
                 </TouchableOpacity>
               </>
             )}
           </View>
-        </Pressable>
-      </Modal>
+        </>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    position: 'relative',
+    zIndex: 1000,
+  },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: Spacing.xl,
     paddingVertical: Spacing.lg,
     backgroundColor: Colors.white,
     borderBottomWidth: 1,
     borderBottomColor: Colors.neutral100,
     shadowColor: Colors.black,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  headerMobile: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+  },
+  logoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   logo: {
     fontSize: 24,
     fontWeight: 'bold',
     color: Colors.primary,
   },
-  centerTabs: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.lg,
-    flex: 1,
-    justifyContent: 'center',
+  logoMobile: {
+    fontSize: 20,
   },
-  tab: {
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-  },
-  tabText: {
-    fontSize: FontSizes.md,
-    color: Colors.neutral500,
-    fontWeight: '500',
-  },
-  tabActive: {
-    color: Colors.neutral900,
-    fontWeight: '600',
-  },
-  rightActions: {
+  rightSection: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.md,
   },
-  becomeHostButton: {
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
+  hostButton: {
+    paddingVertical: Spacing.sm + 2,
+    paddingHorizontal: Spacing.lg,
     borderRadius: BorderRadius.full,
   },
-  becomeHostText: {
+  hostButtonMobile: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+  },
+  hostButtonText: {
     fontSize: FontSizes.sm,
-    fontWeight: '600',
+    fontWeight: '500',
     color: Colors.neutral700,
+  },
+  hostButtonTextMobile: {
+    fontSize: FontSizes.sm,
   },
   menuButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.sm,
-    paddingVertical: Spacing.xs,
-    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.full,
     borderWidth: 1,
     borderColor: Colors.neutral200,
-    borderRadius: BorderRadius.full,
     backgroundColor: Colors.white,
   },
-  avatarSmall: {
+  menuButtonMobile: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.neutral200,
+    backgroundColor: Colors.white,
+  },
+  avatarPlaceholder: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.neutral100,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  avatarText: {
-    color: Colors.white,
-    fontSize: FontSizes.sm,
-    fontWeight: '600',
-  },
-  modalOverlay: {
-    flex: 1,
+  overlay: {
+    ...Platform.select({
+      web: {
+        position: 'fixed' as any,
+      },
+      default: {
+        position: 'absolute' as any,
+      },
+    }),
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: 'rgba(0, 0, 0, 0.3)',
-    justifyContent: 'flex-start',
-    alignItems: 'flex-end',
-    paddingTop: 70,
-    paddingRight: Spacing.xl,
+    zIndex: 999,
   },
-  menuDropdown: {
+  dropdown: {
+    position: 'absolute',
     backgroundColor: Colors.white,
     borderRadius: BorderRadius.lg,
-    paddingVertical: Spacing.sm,
-    minWidth: 240,
     shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
-    shadowRadius: 8,
+    shadowRadius: 12,
     elevation: 8,
+    zIndex: 1001,
+    borderWidth: 1,
+    borderColor: Colors.neutral100,
+  },
+  dropdownDesktop: {
+    top: 70,
+    right: Spacing.xl,
+    minWidth: 240,
+    maxWidth: 280,
+  },
+  dropdownMobile: {
+    top: 60,
+    left: Spacing.md,
+    right: Spacing.md,
+    maxHeight: '80%',
+  },
+  menuHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    padding: Spacing.lg,
+    backgroundColor: Colors.primary,
+    borderTopLeftRadius: BorderRadius.lg,
+    borderTopRightRadius: BorderRadius.lg,
+  },
+  menuAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  menuUserName: {
+    fontSize: FontSizes.md,
+    fontWeight: '600',
+    color: Colors.white,
+  },
+  menuUserEmail: {
+    fontSize: FontSizes.sm,
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginTop: 2,
   },
   menuItem: {
     flexDirection: 'row',
@@ -309,12 +406,9 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.md,
     color: Colors.neutral700,
   },
-  menuItemBold: {
-    fontWeight: '600',
-  },
   menuDivider: {
     height: 1,
     backgroundColor: Colors.neutral100,
-    marginVertical: Spacing.xs,
+    marginVertical: Spacing.sm,
   },
 });

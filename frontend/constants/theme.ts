@@ -1,32 +1,30 @@
-// constants/theme.ts
 export const Colors = {
-  primary: '#1E3F66',
-  primaryLight: '#2C5F96',
-  primaryDark: '#142838',
+  primary: '#8B5CF6',      // Morado violeta
+  primaryLight: '#A78BFA',
+  primaryDark: '#7C3AED',
   
-  accent: '#F39C12',
-  accentLight: '#F5B041',
-  accentDark: '#E67E22',
+  accent: '#EC4899',       // Rosa vibrante
+  accentLight: '#F472B6',
+  accentDark: '#DB2777',
   
-  success: '#27AE60',
-  error: '#E74C3C',
-  warning: '#F39C12',
-  info: '#3498DB',
+  success: '#10B981',
+  error: '#EF4444',
+  warning: '#F59E0B',
+  info: '#3B82F6',
   
   white: '#FFFFFF',
   black: '#000000',
   
-  // Escala completa de neutral
-  neutral50: '#F8FAFB',
-  neutral100: '#E5E9ED',
-  neutral200: '#CBD5E1',
-  neutral300: '#A0AEC0',
-  neutral400: '#8B99A8',
-  neutral500: '#718096',
-  neutral600: '#4A5568',
-  neutral700: '#3D4852',
-  neutral800: '#2D3748',
-  neutral900: '#1A202C',
+  neutral50: '#F9FAFB',
+  neutral100: '#F3F4F6',
+  neutral200: '#E5E7EB',
+  neutral300: '#D1D5DB',
+  neutral400: '#9CA3AF',
+  neutral500: '#6B7280',
+  neutral600: '#4B5563',
+  neutral700: '#374151',
+  neutral800: '#1F2937',
+  neutral900: '#111827',
 };
 
 export const Spacing = {

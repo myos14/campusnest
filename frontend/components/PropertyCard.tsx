@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { Propiedad } from '../types';
-import { calificacionesService } from '../services/api';
+import { Colors, Spacing, FontSizes, BorderRadius } from '../constants/theme';
 
 interface PropertyCardProps {
   propiedad: Propiedad;
@@ -11,48 +11,15 @@ interface PropertyCardProps {
 
 export default function PropertyCard({ propiedad, onPress }: PropertyCardProps) {
   const [esFavorito, setEsFavorito] = useState(false);
-  const [estadisticas, setEstadisticas] = useState<any>(null);
-  const [loadingEstadisticas, setLoadingEstadisticas] = useState(false);
   const [isPressed, setIsPressed] = useState(false);
 
   const fotoPrincipal = propiedad.fotos?.find(f => f.es_principal)?.url_foto || 
                        'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267';
 
-  useEffect(() => {
-    cargarEstadisticas();
-  }, [propiedad.id_propiedad]);
-
-  const cargarEstadisticas = async () => {
-    try {
-      setLoadingEstadisticas(true);
-      const stats = await calificacionesService.obtenerEstadisticasPropiedad(propiedad.id_propiedad);
-      setEstadisticas(stats);
-    } catch (error) {
-      console.error('Error cargando estadísticas:', error);
-    } finally {
-      setLoadingEstadisticas(false);
-    }
-  };
-
-  const toggleFavorito = () => {
+  const toggleFavorito = (e: any) => {
+    e.stopPropagation();
     setEsFavorito(!esFavorito);
-    // Implementacion de la llamada API
-  };
-
-  const renderEstrellas = (calificacion: number) => {
-    return (
-      <View style={styles.estrellasContainer}>
-        {[1, 2, 3, 4, 5].map((estrella) => (
-          <Ionicons
-            key={estrella}
-            name={estrella <= calificacion ? "star" : "star-outline"}
-            size={12}
-            color="#1E3F66"
-          />
-        ))}
-        <Text style={styles.calificacionText}>({calificacion.toFixed(1)})</Text>
-      </View>
-    );
+    // TODO: Implementar la llamada API para guardar favorito
   };
 
   return (
@@ -67,44 +34,43 @@ export default function PropertyCard({ propiedad, onPress }: PropertyCardProps) 
       activeOpacity={1}
     >
       <View style={styles.imageContainer}>
-        <Image source={{ uri: fotoPrincipal }} style={styles.image} />
+        <Image 
+          source={{ uri: fotoPrincipal }} 
+          style={styles.image}
+          resizeMode="cover"
+        />
         
         {/* Badge de Verificado */}
         {propiedad.id_arrendador && (
           <View style={styles.verifiedBadge}>
-            <Ionicons name="shield-checkmark" size={12} color="#fff" />
+            <Ionicons name="shield-checkmark" size={12} color={Colors.white} />
             <Text style={styles.verifiedText}>Verificado</Text>
           </View>
         )}
 
+        {/* Botón de favorito */}
         <TouchableOpacity 
           style={[styles.favoriteButton, esFavorito && styles.favoriteButtonActive]}
           onPress={toggleFavorito}
-          activeOpacity={1}
+          activeOpacity={0.8}
         >
           <Ionicons 
             name={esFavorito ? "heart" : "heart-outline"} 
             size={20} 
-            color={esFavorito ? "#1E3F66" : "#fff"} 
+            color={esFavorito ? Colors.error : Colors.white} 
           />
         </TouchableOpacity>
       </View>
 
       <View style={styles.content}>
-        {/* Header con ubicación y calificación */}
+        {/* Header con ubicación */}
         <View style={styles.header}>
           <View style={styles.location}>
-            <Ionicons name="location-outline" size={14} color="#6b7280" />
+            <Ionicons name="location-outline" size={14} color={Colors.neutral500} />
             <Text style={styles.locationText} numberOfLines={1}>
               {propiedad.colonia}, {propiedad.ciudad}
             </Text>
           </View>
-          
-          {estadisticas && estadisticas.total_calificaciones > 0 && (
-            <View style={styles.ratingContainer}>
-              {renderEstrellas(estadisticas.promedio_general)}
-            </View>
-          )}
         </View>
 
         {/* Título */}
@@ -114,37 +80,49 @@ export default function PropertyCard({ propiedad, onPress }: PropertyCardProps) 
         <View style={styles.features}>
           {propiedad.caracteristicas?.numero_camas && (
             <View style={styles.feature}>
-              <Ionicons name="bed-outline" size={14} color="#6b7280" />
-              <Text style={styles.featureText}>{propiedad.caracteristicas.numero_camas}</Text>
+              <Ionicons name="bed-outline" size={16} color={Colors.neutral500} />
+              <Text style={styles.featureText}>
+                {propiedad.caracteristicas.numero_camas} {propiedad.caracteristicas.numero_camas === 1 ? 'cama' : 'camas'}
+              </Text>
             </View>
           )}
           {propiedad.caracteristicas?.numero_banios && (
             <View style={styles.feature}>
-              <Ionicons name="water-outline" size={14} color="#6b7280" />
-              <Text style={styles.featureText}>{propiedad.caracteristicas.numero_banios}</Text>
+              <Ionicons name="water-outline" size={16} color={Colors.neutral500} />
+              <Text style={styles.featureText}>
+                {propiedad.caracteristicas.numero_banios} {propiedad.caracteristicas.numero_banios === 1 ? 'baño' : 'baños'}
+              </Text>
             </View>
           )}
           {propiedad.caracteristicas?.metros_cuadrados && (
             <View style={styles.feature}>
-              <Ionicons name="square-outline" size={14} color="#6b7280" />
+              <Ionicons name="expand-outline" size={16} color={Colors.neutral500} />
               <Text style={styles.featureText}>{propiedad.caracteristicas.metros_cuadrados}m²</Text>
             </View>
           )}
         </View>
 
-        {/* Características con iconos */}
+        {/* Amenidades */}
         <View style={styles.amenities}>
           {propiedad.caracteristicas?.wifi && (
-            <Ionicons name="wifi" size={16} color="#6b7280" />
+            <View style={styles.amenity}>
+              <Ionicons name="wifi" size={16} color={Colors.primary} />
+            </View>
           )}
           {propiedad.caracteristicas?.estacionamiento && (
-            <Ionicons name="car-sport-outline" size={16} color="#6b7280" />
+            <View style={styles.amenity}>
+              <Ionicons name="car-sport-outline" size={16} color={Colors.primary} />
+            </View>
           )}
           {propiedad.caracteristicas?.mascotas_permitidas && (
-            <Ionicons name="paw-outline" size={16} color="#6b7280" />
+            <View style={styles.amenity}>
+              <Ionicons name="paw-outline" size={16} color={Colors.primary} />
+            </View>
           )}
           {propiedad.caracteristicas?.amueblado && (
-            <Ionicons name="home-outline" size={16} color="#6b7280" />
+            <View style={styles.amenity}>
+              <Ionicons name="home-outline" size={16} color={Colors.primary} />
+            </View>
           )}
         </View>
 
@@ -152,21 +130,15 @@ export default function PropertyCard({ propiedad, onPress }: PropertyCardProps) 
         <View style={styles.footer}>
           <View>
             <Text style={styles.price}>
-              <Text style={styles.priceAmount}>${propiedad.precio_mensual.toLocaleString()}</Text>
+              <Text style={styles.priceAmount}>${propiedad.precio_mensual.toLocaleString('es-MX')}</Text>
               <Text style={styles.pricePeriod}> / mes</Text>
             </Text>
             {propiedad.deposito_requerido && (
               <Text style={styles.deposit}>
-                + ${propiedad.deposito_requerido.toLocaleString()} de depósito
+                + ${propiedad.deposito_requerido.toLocaleString('es-MX')} de depósito
               </Text>
             )}
           </View>
-          
-          {estadisticas && estadisticas.total_calificaciones > 0 && (
-            <Text style={styles.reviews}>
-              {estadisticas.total_calificaciones} {estadisticas.total_calificaciones === 1 ? 'reseña' : 'reseñas'}
-            </Text>
-          )}
         </View>
       </View>
     </TouchableOpacity>
@@ -175,39 +147,35 @@ export default function PropertyCard({ propiedad, onPress }: PropertyCardProps) 
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
+    backgroundColor: Colors.white,
+    borderRadius: BorderRadius.lg,
     overflow: 'hidden',
-    marginBottom: 24,
-    // Sombra estática con tu color rojo
-    shadowColor: '#1E3F66',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    marginBottom: Spacing.xl,
+    shadowColor: Colors.black,
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 4,
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: Colors.neutral100,
   },
   cardPressed: {
-    // Cuando está presionado - tono más claro del rojo
-    shadowColor: '#ff6b8b',
+    shadowColor: Colors.primary,
     shadowOpacity: 0.2,
     shadowRadius: 12,
     elevation: 6,
-    borderColor: '#1E3F66',
-    borderWidth: 1,
+    borderColor: Colors.primary,
     transform: [{ scale: 0.98 }],
   },
   imageContainer: {
     position: 'relative',
+    width: '100%',
+    height: 240,
   },
   image: {
     width: '100%',
-    height: 240,
-    backgroundColor: '#f3f4f6',
+    height: '100%',
+    backgroundColor: Colors.neutral100,
   },
   verifiedBadge: {
     position: 'absolute',
@@ -216,14 +184,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: 'rgba(0,0,0,0.7)',
+    backgroundColor: 'rgba(30, 63, 102, 0.9)',
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: BorderRadius.full,
   },
   verifiedText: {
-    color: '#fff',
-    fontSize: 10,
+    color: Colors.white,
+    fontSize: FontSizes.xs,
     fontWeight: '600',
   },
   favoriteButton: {
@@ -233,99 +201,91 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   favoriteButtonActive: {
-    backgroundColor: 'rgba(255,255,255,0.9)',
+    backgroundColor: Colors.white,
   },
   content: {
-    padding: 16,
+    padding: Spacing.lg,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 8,
+    marginBottom: Spacing.sm,
   },
   location: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
   },
   locationText: {
-    fontSize: 14,
+    fontSize: FontSizes.sm,
     fontWeight: '500',
-    color: '#111',
+    color: Colors.neutral700,
     flex: 1,
   },
-  ratingContainer: {
-    alignItems: 'flex-end',
-  },
-  estrellasContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-  },
-  calificacionText: {
-    fontSize: 12,
-    color: '#6b7280',
-    marginLeft: 4,
-  },
   title: {
-    fontSize: 16,
-    color: '#374151',
-    marginBottom: 12,
-    lineHeight: 22,
-    fontWeight: '500',
+    fontSize: FontSizes.lg,
+    fontWeight: '600',
+    color: Colors.neutral900,
+    marginBottom: Spacing.md,
+    lineHeight: 24,
   },
   features: {
     flexDirection: 'row',
-    gap: 16,
-    marginBottom: 12,
+    gap: Spacing.lg,
+    marginBottom: Spacing.md,
   },
   feature: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
   },
   featureText: {
-    fontSize: 14,
-    color: '#6b7280',
+    fontSize: FontSizes.sm,
+    color: Colors.neutral600,
+    fontWeight: '500',
   },
   amenities: {
     flexDirection: 'row',
-    gap: 12,
-    marginBottom: 16,
+    gap: Spacing.md,
+    marginBottom: Spacing.lg,
+    flexWrap: 'wrap',
+  },
+  amenity: {
+    width: 32,
+    height: 32,
+    borderRadius: BorderRadius.sm,
+    backgroundColor: Colors.neutral50,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-end',
+    paddingTop: Spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: Colors.neutral100,
   },
   price: {
     flexDirection: 'row',
     alignItems: 'baseline',
   },
   priceAmount: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#111',
+    fontSize: FontSizes.xxl,
+    fontWeight: '700',
+    color: Colors.primary,
   },
   pricePeriod: {
-    fontSize: 14,
-    color: '#6b7280',
+    fontSize: FontSizes.md,
+    color: Colors.neutral600,
+    fontWeight: '500',
   },
   deposit: {
-    fontSize: 12,
-    color: '#6b7280',
-    marginTop: 2,
-  },
-  reviews: {
-    fontSize: 12,
-    color: '#6b7280',
-    textAlign: 'right',
+    fontSize: FontSizes.xs,
+    color: Colors.neutral500,
+    marginTop: 4,
   },
 });
